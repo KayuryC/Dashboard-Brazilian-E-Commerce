@@ -1,4 +1,5 @@
 import {
+  DeliveryTimeAnalysis,
   OrderValueDescriptiveStats,
   OrdersByStatusPoint,
   OverviewMetrics,
@@ -76,6 +77,18 @@ export async function getOrderValueDescriptiveStats(): Promise<OrderValueDescrip
 
   if (!res.ok) {
     throw new Error("Failed to fetch order value descriptive stats")
+  }
+
+  return res.json()
+}
+
+export async function getDeliveryTimeAnalysis(): Promise<DeliveryTimeAnalysis> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/statistics/descriptive/delivery-time`, {
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch delivery time analysis")
   }
 
   return res.json()
