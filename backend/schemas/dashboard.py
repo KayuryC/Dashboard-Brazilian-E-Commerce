@@ -15,3 +15,26 @@ class OverviewMetrics(BaseModel):
     delivered_orders: int
     canceled_orders: int
     status_breakdown: dict[str, int]
+
+
+class OrdersByStatusPoint(BaseModel):
+    order_status: str
+    orders: int
+
+
+class SalesMonthlyPoint(BaseModel):
+    purchase_year_month: str
+    revenue: float
+    orders: int
+
+
+class SalesByStatePoint(BaseModel):
+    customer_state: str
+    revenue: float
+    orders: int
+
+
+class SalesByCategoryPoint(BaseModel):
+    product_category_name_english: str
+    revenue: float
+    items: int
