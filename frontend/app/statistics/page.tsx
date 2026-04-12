@@ -26,8 +26,8 @@ export default async function StatisticsPage() {
   ])
 
   const ordersChartData = ordersByStatus.map((item) => ({
-    name: item.order_status,
-    value: item.orders,
+    name: item.label,
+    value: item.value,
   }))
 
   const topState = salesByState[0]
@@ -90,14 +90,14 @@ export default async function StatisticsPage() {
 
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Status detalhado</CardTitle>
-              <CardDescription>Contagem absoluta por status</CardDescription>
+              <CardTitle>Composicao operacional dos pedidos</CardTitle>
+              <CardDescription>Distribuicao de pedidos por status</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               {ordersByStatus.map((item) => (
-                <div key={item.order_status} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-                  <span className="text-sm text-slate-700">{item.order_status}</span>
-                  <span className="text-sm font-semibold text-slate-900">{item.orders.toLocaleString("pt-BR")}</span>
+                <div key={item.status} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                  <span className="text-sm text-slate-700">{item.label}</span>
+                  <span className="text-sm font-semibold text-slate-900">{item.value.toLocaleString("pt-BR")}</span>
                 </div>
               ))}
             </CardContent>
