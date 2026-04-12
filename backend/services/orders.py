@@ -4,6 +4,19 @@ import pandas as pd
 
 from services.preprocessing import get_consolidated_dataset
 
+STATUS_TRANSLATION: dict[str, str] = {
+    "delivered": "Entregue",
+    "shipped": "Enviado",
+    "canceled": "Cancelado",
+    "cancelled": "Cancelado",
+    "unavailable": "Indisponivel",
+    "invoiced": "Faturado",
+    "processing": "Em processamento",
+    "created": "Criado",
+    "approved": "Aprovado",
+    "unknown": "Nao informado",
+}
+
 
 def get_orders_by_status(data_dir: Path) -> pd.DataFrame:
     df = get_consolidated_dataset(data_dir)
@@ -11,9 +24,11 @@ def get_orders_by_status(data_dir: Path) -> pd.DataFrame:
 
     result = (
         order_level.groupby("order_status", dropna=False, as_index=False)
-        .agg(orders=("order_id", "nunique"))
-        .sort_values("orders", ascending=False)
+        .agg(value=("order_id", "nunique"))
+        .sort_values("value", ascending=False)
     )
-    result["order_status"] = result["order_status"].fillna("unknown").astype(str)
-    result["orders"] = result["orders"].fillna(0).astype(int)
-    return result
+    result["status"] = result["order_status"].fillna("unknown").astype(str).str.strip().str.lower()
+    result["value"] = result["value"].fillna(0).astype(int)
+    result["label"] = result["status"].map(lambda status: STATUS_TRANSLATION.get(status, status))
+
+    return result[["status", "label", "value"]]
