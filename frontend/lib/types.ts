@@ -49,3 +49,18 @@ export type OrderValueDescriptiveStats = {
   max_value: number
   histogram: DescriptiveHistogramBin[]
 }
+
+export type DeliveryHistogramBin = {
+  label: string
+  min_days: number
+  max_days: number
+  count: number
+}
+
+export type DeliveryTimeAnalysis = {
+  avg_delivery_days: number
+  avg_estimated_days: number
+  std_delivery_days: number
+  late_delivery_percentage: number
+  histogram: DeliveryHistogramBin[]
+}
