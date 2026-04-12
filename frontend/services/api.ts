@@ -1,4 +1,5 @@
 import {
+  OrderValueDescriptiveStats,
   OrdersByStatusPoint,
   OverviewMetrics,
   SalesByCategoryPoint,
@@ -63,6 +64,18 @@ export async function getSalesByCategory(): Promise<SalesByCategoryPoint[]> {
 
   if (!res.ok) {
     throw new Error("Failed to fetch sales by category")
+  }
+
+  return res.json()
+}
+
+export async function getOrderValueDescriptiveStats(): Promise<OrderValueDescriptiveStats> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/statistics/descriptive/order-values`, {
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch order value descriptive stats")
   }
 
   return res.json()
