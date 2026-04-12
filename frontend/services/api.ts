@@ -4,6 +4,7 @@ import {
   OrdersByStatusPoint,
   OverviewMetrics,
   SalesByCategoryPoint,
+  SalesByCityPoint,
   SalesByStatePoint,
   SalesMonthlyPoint,
 } from "@/lib/types"
@@ -29,6 +30,18 @@ export async function getSalesByState(): Promise<SalesByStatePoint[]> {
 
   if (!res.ok) {
     throw new Error("Failed to fetch sales by state")
+  }
+
+  return res.json()
+}
+
+export async function getSalesByCity(): Promise<SalesByCityPoint[]> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/sales/by-city`, {
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch sales by city")
   }
 
   return res.json()
