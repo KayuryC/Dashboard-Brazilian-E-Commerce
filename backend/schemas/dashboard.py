@@ -55,3 +55,18 @@ class OrderValueDescriptiveStats(BaseModel):
     min_value: float
     max_value: float
     histogram: list[DescriptiveHistogramBin]
+
+
+class DeliveryHistogramBin(BaseModel):
+    label: str
+    min_days: float
+    max_days: float
+    count: int
+
+
+class DeliveryTimeAnalysis(BaseModel):
+    avg_delivery_days: float
+    avg_estimated_days: float
+    std_delivery_days: float
+    late_delivery_percentage: float
+    histogram: list[DeliveryHistogramBin]
