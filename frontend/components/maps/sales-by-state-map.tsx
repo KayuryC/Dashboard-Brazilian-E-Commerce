@@ -114,7 +114,7 @@ export function SalesByStateMap({ data }: SalesByStateMapProps) {
           }}
           onEachFeature={(feature, layer) => {
             const uf = String(feature?.properties?.sigla ?? "").toUpperCase()
-            const stateName = String(feature?.properties?.name ?? uf || "Estado")
+            const stateName = String(feature?.properties?.name ?? (uf || "Estado"))
             const point = stateMetricsByUf.get(uf)
 
             const revenue = point?.revenue ?? 0
