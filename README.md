@@ -1,6 +1,8 @@
-# Dashboard Giras
+# Dashboard-Brazilian-E-Commerce
 
-Stack definido:
+Full-stack data dashboard for analyzing Brazilian e-commerce data (2016-2018), built with FastAPI, Pandas, and Next.js.
+
+## Stack
 
 - Backend: Python 3.12, FastAPI, Pandas, Uvicorn, Pydantic
 - Frontend: Next.js, TypeScript, Tailwind CSS, shadcn/ui, Recharts
@@ -36,7 +38,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-API disponível em `http://localhost:8000`.
+API disponivel em `http://localhost:8000`.
 
 ## Frontend
 
@@ -46,6 +48,6 @@ npm install
 npm run dev
 ```
 
-App disponível em `http://localhost:3000`.
+App disponivel em `http://localhost:3000`.
 
-Defina `NEXT_PUBLIC_API_URL` se o backend não estiver em `http://localhost:8000`.
+Defina `NEXT_PUBLIC_API_URL` se o backend nao estiver em `http://localhost:8000`.
