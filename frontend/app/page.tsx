@@ -1,20 +1,7 @@
-import dynamic from "next/dynamic"
-
 import { OrdersByStatusChart } from "@/components/charts/orders-by-status"
+import { SalesByStateMap } from "@/components/maps/sales-by-state-map"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getOverviewMetrics, getSalesByState } from "@/services/api"
-
-const SalesByStateMap = dynamic(
-  () => import("@/components/maps/sales-by-state-map").then((mod) => mod.SalesByStateMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-[460px] items-center justify-center rounded-lg border bg-slate-100 text-sm text-slate-600">
-        Carregando mapa...
-      </div>
-    ),
-  }
-)
 
 function toCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
