@@ -39,3 +39,19 @@ class SalesByCategoryPoint(BaseModel):
     product_category_name_english: str
     revenue: float
     items: int
+
+
+class DescriptiveHistogramBin(BaseModel):
+    label: str
+    min_value: float
+    max_value: float
+    count: int
+
+
+class OrderValueDescriptiveStats(BaseModel):
+    mean_value: float
+    median_value: float
+    std_dev_value: float
+    min_value: float
+    max_value: float
+    histogram: list[DescriptiveHistogramBin]
