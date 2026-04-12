@@ -1,6 +1,20 @@
+import dynamic from "next/dynamic"
+
 import { OrdersByStatusChart } from "@/components/charts/orders-by-status"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getOverviewMetrics } from "@/services/api"
+import { getOverviewMetrics, getSalesByState } from "@/services/api"
+
+const SalesByStateMap = dynamic(
+  () => import("@/components/maps/sales-by-state-map").then((mod) => mod.SalesByStateMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[460px] items-center justify-center rounded-lg border bg-slate-100 text-sm text-slate-600">
+        Carregando mapa...
+      </div>
+    ),
+  }
+)
 
 function toCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -10,7 +24,7 @@ function toCurrency(value: number) {
 }
 
 export default async function HomePage() {
-  const metrics = await getOverviewMetrics()
+  const [metrics, salesByStateData] = await Promise.all([getOverviewMetrics(), getSalesByState()])
   const statusData = Object.entries(metrics.status_breakdown).map(([name, value]) => ({
     name,
     value,
@@ -72,6 +86,18 @@ export default async function HomePage() {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold text-slate-900">{toCurrency(metrics.total_revenue)}</p>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <Card>
+            <CardHeader>
+              <CardTitle>Receita por estado</CardTitle>
+              <CardDescription>Mapa coroplético com intensidade por receita</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SalesByStateMap data={salesByStateData} />
             </CardContent>
           </Card>
         </section>
