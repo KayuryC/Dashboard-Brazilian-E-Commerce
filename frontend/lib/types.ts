@@ -16,6 +16,12 @@ export type SalesByStatePoint = {
   orders: number
 }
 
+export type SalesByCityPoint = {
+  customer_city: string
+  revenue: number
+  orders: number
+}
+
 export type OrdersByStatusPoint = {
   status: string
   label: string
