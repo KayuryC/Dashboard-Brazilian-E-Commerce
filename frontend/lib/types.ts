@@ -17,8 +17,9 @@ export type SalesByStatePoint = {
 }
 
 export type OrdersByStatusPoint = {
-  order_status: string
-  orders: number
+  status: string
+  label: string
+  value: number
 }
 
 export type SalesMonthlyPoint = {
