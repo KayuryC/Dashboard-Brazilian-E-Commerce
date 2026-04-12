@@ -1,17 +1,9 @@
-import { OrderValueHistogram } from "@/components/charts/order-value-histogram"
 import { OrdersByStatusChart } from "@/components/charts/orders-by-status"
 import { SalesCategoryChart } from "@/components/charts/sales-category-chart"
 import { SalesMonthlyChart } from "@/components/charts/sales-monthly-chart"
 import { SalesByStateMapDynamic } from "@/components/maps/sales-by-state-map-dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  getOrderValueDescriptiveStats,
-  getOrdersByStatus,
-  getOverviewMetrics,
-  getSalesByCategory,
-  getSalesByState,
-  getSalesMonthly,
-} from "@/services/api"
+import { getOrdersByStatus, getOverviewMetrics, getSalesByCategory, getSalesByState, getSalesMonthly } from "@/services/api"
 
 function toCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -25,13 +17,12 @@ function toPercentage(value: number) {
 }
 
 export default async function StatisticsPage() {
-  const [metrics, ordersByStatus, salesMonthly, salesByCategory, salesByState, orderValueStats] = await Promise.all([
+  const [metrics, ordersByStatus, salesMonthly, salesByCategory, salesByState] = await Promise.all([
     getOverviewMetrics(),
     getOrdersByStatus(),
     getSalesMonthly(),
     getSalesByCategory(),
     getSalesByState(),
-    getOrderValueDescriptiveStats(),
   ])
 
   const ordersChartData = ordersByStatus.map((item) => ({
@@ -51,7 +42,7 @@ export default async function StatisticsPage() {
           </p>
         </section>
 
-        <section id="visao-geral" className="scroll-mt-24 grid gap-6">
+        <section className="grid gap-6">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">Visão geral</h2>
             <p className="text-sm text-slate-600">Insights introdutórios sobre desempenho geral e operação</p>
@@ -164,60 +155,6 @@ export default async function StatisticsPage() {
             </CardHeader>
             <CardContent>
               <SalesByStateMapDynamic data={salesByState} />
-            </CardContent>
-          </Card>
-        </section>
-
-        <section id="bloco-1" className="scroll-mt-24 grid gap-6">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Bloco 1 — Estatística Descritiva</h2>
-            <p className="text-sm text-slate-600">Distribuição de valores de pedidos</p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <Card>
-              <CardHeader>
-                <CardDescription>Média</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.mean_value)}</CardTitle>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardDescription>Mediana</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.median_value)}</CardTitle>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardDescription>Desvio padrão</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.std_dev_value)}</CardTitle>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardDescription>Valor mínimo</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.min_value)}</CardTitle>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardDescription>Valor máximo</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.max_value)}</CardTitle>
-              </CardHeader>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribuição de valores de pedidos</CardTitle>
-              <CardDescription>Histograma da concentração de pedidos por faixa de valor</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <OrderValueHistogram data={orderValueStats.histogram} />
             </CardContent>
           </Card>
         </section>
