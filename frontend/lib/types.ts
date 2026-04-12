@@ -33,3 +33,19 @@ export type SalesByCategoryPoint = {
   revenue: number
   items: number
 }
+
+export type DescriptiveHistogramBin = {
+  label: string
+  min_value: number
+  max_value: number
+  count: number
+}
+
+export type OrderValueDescriptiveStats = {
+  mean_value: number
+  median_value: number
+  std_dev_value: number
+  min_value: number
+  max_value: number
+  histogram: DescriptiveHistogramBin[]
+}
