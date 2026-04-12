@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, Home, Map, Menu, ShoppingBag, X } from "lucide-react"
+import { BarChart3, Clock3, Home, Menu, X } from "lucide-react"
 import { type ComponentType, useMemo, useState } from "react"
 
 import { cn } from "@/lib/utils"
@@ -18,34 +18,27 @@ const navItems: NavItem[] = [
   {
     href: "/",
     label: "Home",
-    description: "Visão executiva do e-commerce",
+    description: "Resumo e navegação dos módulos",
     icon: Home,
   },
   {
-    href: "/pedidos",
-    label: "Pedidos",
-    description: "Status e distribuição de pedidos",
-    icon: ShoppingBag,
-  },
-  {
-    href: "/vendas",
-    label: "Vendas",
-    description: "Evolução temporal e categorias",
+    href: "/statistics",
+    label: "Estatística e Probabilidade",
+    description: "Dashboard analítico completo",
     icon: BarChart3,
   },
   {
-    href: "/regional",
-    label: "Regional",
-    description: "Mapa e ranking por estado",
-    icon: Map,
+    href: "/modeling",
+    label: "Modelagem Estatística",
+    description: "Módulo em desenvolvimento",
+    icon: Clock3,
   },
 ]
 
 const titleByPath: Record<string, string> = {
   "/": "Home",
-  "/pedidos": "Pedidos",
-  "/vendas": "Vendas",
-  "/regional": "Regional",
+  "/statistics": "Estatística e Probabilidade",
+  "/modeling": "Modelagem Estatística",
 }
 
 export function HamburgerMenu() {
