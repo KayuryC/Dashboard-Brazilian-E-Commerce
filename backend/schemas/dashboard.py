@@ -35,6 +35,12 @@ class SalesByStatePoint(BaseModel):
     orders: int
 
 
+class SalesByCityPoint(BaseModel):
+    customer_city: str
+    revenue: float
+    orders: int
+
+
 class SalesByCategoryPoint(BaseModel):
     product_category_name_english: str
     revenue: float
