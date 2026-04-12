@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { BarChart3, Clock3, Home, Layers3, Menu, X } from "lucide-react"
-import { type ComponentType, useEffect, useMemo, useState } from "react"
+import { type ComponentType, useMemo, useState } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -43,16 +43,22 @@ const statisticsNavItems: NavItem[] = [
     icon: Home,
   },
   {
-    href: "/statistics#visao-geral",
+    href: "/statistics",
     label: "Visão geral",
     description: "Insights introdutórios do módulo",
     icon: Layers3,
   },
   {
-    href: "/statistics#bloco-1",
+    href: "/statistics/bloco-1",
     label: "Bloco 1 — Estatística Descritiva",
     description: "Distribuição de valores de pedidos",
     icon: BarChart3,
+  },
+  {
+    href: "/statistics/bloco-2",
+    label: "Bloco 2 — Tempo de Entrega",
+    description: "Médias, atraso e distribuição de dias",
+    icon: Clock3,
   },
 ]
 
@@ -64,24 +70,11 @@ const titleByPath: Record<string, string> = {
 
 export function HamburgerMenu() {
   const [open, setOpen] = useState(false)
-  const [currentHash, setCurrentHash] = useState("")
   const pathname = usePathname()
+  const inStatisticsModule = pathname === "/statistics" || pathname.startsWith("/statistics/")
 
-  const currentTitle = useMemo(() => titleByPath[pathname] ?? "Dashboard", [pathname])
-  const menuItems = pathname === "/statistics" ? statisticsNavItems : navItems
-
-  useEffect(() => {
-    const syncHash = () => {
-      setCurrentHash(window.location.hash.replace("#", ""))
-    }
-
-    syncHash()
-    window.addEventListener("hashchange", syncHash)
-
-    return () => {
-      window.removeEventListener("hashchange", syncHash)
-    }
-  }, [pathname])
+  const currentTitle = useMemo(() => (inStatisticsModule ? "Estatística e Probabilidade" : titleByPath[pathname] ?? "Dashboard"), [inStatisticsModule, pathname])
+  const menuItems = inStatisticsModule ? statisticsNavItems : navItems
 
   return (
     <>
@@ -122,7 +115,7 @@ export function HamburgerMenu() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Navegação</p>
-            <h2 className="text-lg font-semibold text-slate-900">{pathname === "/statistics" ? "Seções" : "Módulos"}</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{inStatisticsModule ? "Seções" : "Módulos"}</h2>
           </div>
           <button
             type="button"
@@ -137,13 +130,7 @@ export function HamburgerMenu() {
         <nav className="grid gap-2">
           {menuItems.map((item) => {
             const Icon = item.icon
-            const isStatisticsAnchor = item.href.startsWith("/statistics#")
-            const anchorName = item.href.split("#")[1]
-            const effectiveHash = currentHash || "visao-geral"
-            const isActive =
-              isStatisticsAnchor && pathname === "/statistics" && anchorName
-                ? effectiveHash === anchorName
-                : pathname === item.href
+            const isActive = pathname === item.href
 
             return (
               <Link
