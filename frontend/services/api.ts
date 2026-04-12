@@ -1,4 +1,10 @@
-import { OverviewMetrics, SalesByStatePoint } from "@/lib/types"
+import {
+  OrdersByStatusPoint,
+  OverviewMetrics,
+  SalesByCategoryPoint,
+  SalesByStatePoint,
+  SalesMonthlyPoint,
+} from "@/lib/types"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
@@ -21,6 +27,42 @@ export async function getSalesByState(): Promise<SalesByStatePoint[]> {
 
   if (!res.ok) {
     throw new Error("Failed to fetch sales by state")
+  }
+
+  return res.json()
+}
+
+export async function getOrdersByStatus(): Promise<OrdersByStatusPoint[]> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/orders/by-status`, {
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch orders by status")
+  }
+
+  return res.json()
+}
+
+export async function getSalesMonthly(): Promise<SalesMonthlyPoint[]> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/sales/monthly`, {
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch monthly sales")
+  }
+
+  return res.json()
+}
+
+export async function getSalesByCategory(): Promise<SalesByCategoryPoint[]> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/sales/by-category`, {
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch sales by category")
   }
 
   return res.json()
