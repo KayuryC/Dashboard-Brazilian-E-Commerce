@@ -10,6 +10,7 @@ from schemas.dashboard import (
     OrderValueDescriptiveStats,
     OverviewMetrics,
     SalesByCategoryPoint,
+    SalesByCityPoint,
     SalesByStatePoint,
     SalesMonthlyPoint,
 )
@@ -17,7 +18,12 @@ from services.delivery import get_delivery_time_analysis
 from services.descriptive import get_order_value_descriptive_stats
 from services.orders import get_orders_by_status
 from services.overview import build_overview_metrics
-from services.sales import get_sales_by_category, get_sales_by_state, get_sales_monthly
+from services.sales import (
+    get_sales_by_category,
+    get_sales_by_city,
+    get_sales_by_state,
+    get_sales_monthly,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["dashboard"])
 
@@ -48,6 +54,12 @@ def sales_monthly() -> list[SalesMonthlyPoint]:
 def sales_by_state() -> list[SalesByStatePoint]:
     dataframe = get_sales_by_state(RAW_DATA_DIR)
     return [SalesByStatePoint(**record) for record in dataframe.to_dict(orient="records")]
+
+
+@router.get("/sales/by-city", response_model=list[SalesByCityPoint])
+def sales_by_city() -> list[SalesByCityPoint]:
+    dataframe = get_sales_by_city(RAW_DATA_DIR)
+    return [SalesByCityPoint(**record) for record in dataframe.to_dict(orient="records")]
 
 
 @router.get("/sales/by-category", response_model=list[SalesByCategoryPoint])
