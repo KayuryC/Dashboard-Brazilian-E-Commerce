@@ -15,3 +15,20 @@ export type SalesByStatePoint = {
   revenue: number
   orders: number
 }
+
+export type OrdersByStatusPoint = {
+  order_status: string
+  orders: number
+}
+
+export type SalesMonthlyPoint = {
+  purchase_year_month: string
+  revenue: number
+  orders: number
+}
+
+export type SalesByCategoryPoint = {
+  product_category_name_english: string
+  revenue: number
+  items: number
+}
