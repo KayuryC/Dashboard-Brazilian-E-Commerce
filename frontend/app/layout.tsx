@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { HamburgerMenu } from "@/components/navigation/hamburger-menu"
 import "./globals.css"
 import "leaflet/dist/leaflet.css"
 
@@ -14,7 +15,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body className="bg-slate-50 text-slate-900">
+        <HamburgerMenu />
+        <div className="pt-20">{children}</div>
+      </body>
     </html>
   )
 }
