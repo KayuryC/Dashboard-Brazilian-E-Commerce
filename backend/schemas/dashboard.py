@@ -18,8 +18,9 @@ class OverviewMetrics(BaseModel):
 
 
 class OrdersByStatusPoint(BaseModel):
-    order_status: str
-    orders: int
+    status: str
+    label: str
+    value: int
 
 
 class SalesMonthlyPoint(BaseModel):
