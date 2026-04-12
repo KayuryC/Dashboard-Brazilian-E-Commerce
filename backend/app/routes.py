@@ -2,6 +2,8 @@ from fastapi import APIRouter
 
 from app.config import RAW_DATA_DIR
 from schemas.dashboard import (
+    DeliveryHistogramBin,
+    DeliveryTimeAnalysis,
     DescriptiveHistogramBin,
     HealthResponse,
     OrdersByStatusPoint,
@@ -11,6 +13,7 @@ from schemas.dashboard import (
     SalesByStatePoint,
     SalesMonthlyPoint,
 )
+from services.delivery import get_delivery_time_analysis
 from services.descriptive import get_order_value_descriptive_stats
 from services.orders import get_orders_by_status
 from services.overview import build_overview_metrics
@@ -66,4 +69,19 @@ def statistics_descriptive_order_values() -> OrderValueDescriptiveStats:
         min_value=stats["min_value"],
         max_value=stats["max_value"],
         histogram=[DescriptiveHistogramBin(**item) for item in stats["histogram"]],
+    )
+
+
+@router.get(
+    "/statistics/descriptive/delivery-time",
+    response_model=DeliveryTimeAnalysis,
+)
+def statistics_descriptive_delivery_time() -> DeliveryTimeAnalysis:
+    stats = get_delivery_time_analysis(RAW_DATA_DIR)
+    return DeliveryTimeAnalysis(
+        avg_delivery_days=stats["avg_delivery_days"],
+        avg_estimated_days=stats["avg_estimated_days"],
+        std_delivery_days=stats["std_delivery_days"],
+        late_delivery_percentage=stats["late_delivery_percentage"],
+        histogram=[DeliveryHistogramBin(**item) for item in stats["histogram"]],
     )
