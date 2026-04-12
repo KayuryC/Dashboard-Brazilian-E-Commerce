@@ -50,7 +50,7 @@ export function HamburgerMenu() {
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 md:px-6">
+        <div className="flex h-16 items-center gap-3 px-4 md:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => setOpen((state) => !state)}
@@ -70,7 +70,7 @@ export function HamburgerMenu() {
 
       <div
         className={cn(
-          "fixed inset-0 z-30 bg-slate-950/35 transition-opacity",
+          "fixed inset-x-0 bottom-0 top-16 z-30 bg-slate-950/35 transition-opacity duration-200",
           open ? "opacity-100" : "pointer-events-none opacity-0"
         )}
         onClick={() => setOpen(false)}
@@ -79,7 +79,7 @@ export function HamburgerMenu() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-80 border-r border-slate-200 bg-white p-4 transition-transform",
+          "fixed left-0 top-16 z-50 h-[calc(100dvh-4rem)] w-[340px] max-w-[90vw] border-r border-t border-slate-200 bg-white p-4 shadow-2xl transition-transform duration-200",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
