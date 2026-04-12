@@ -34,7 +34,7 @@ export default async function StatisticsPage() {
 
   return (
     <main className="min-h-screen p-6 md:p-10">
-      <div className="mx-auto grid max-w-6xl gap-6">
+      <div className="mx-auto grid w-full max-w-[1420px] gap-6">
         <section>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Estatística e Probabilidade</h1>
           <p className="text-slate-600">Análise exploratória dos dados do e-commerce com KPIs e distribuição operacional</p>
