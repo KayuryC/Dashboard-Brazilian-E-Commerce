@@ -15,7 +15,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen p-6 md:p-10">
-      <div className="mx-auto grid max-w-6xl gap-8">
+      <div className="mx-auto grid w-full max-w-[1420px] gap-8">
         <section>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard Giras</h1>
           <p className="text-slate-600">
