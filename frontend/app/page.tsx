@@ -1,5 +1,5 @@
 import { OrdersByStatusChart } from "@/components/charts/orders-by-status"
-import { SalesByStateMap } from "@/components/maps/sales-by-state-map"
+import { SalesByStateMapDynamic } from "@/components/maps/sales-by-state-map-dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getOverviewMetrics, getSalesByState } from "@/services/api"
 
@@ -84,7 +84,7 @@ export default async function HomePage() {
               <CardDescription>Mapa coroplético com intensidade por receita</CardDescription>
             </CardHeader>
             <CardContent>
-              <SalesByStateMap data={salesByStateData} />
+              <SalesByStateMapDynamic data={salesByStateData} />
             </CardContent>
           </Card>
         </section>
