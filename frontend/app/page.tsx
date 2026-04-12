@@ -1,7 +1,7 @@
-import { OrdersByStatusChart } from "@/components/charts/orders-by-status"
-import { SalesByStateMapDynamic } from "@/components/maps/sales-by-state-map-dynamic"
+import Link from "next/link"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getOverviewMetrics, getSalesByState } from "@/services/api"
+import { getOverviewMetrics } from "@/services/api"
 
 function toCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -15,18 +15,14 @@ function toPercentage(value: number) {
 }
 
 export default async function HomePage() {
-  const [metrics, salesByStateData] = await Promise.all([getOverviewMetrics(), getSalesByState()])
-  const statusData = Object.entries(metrics.status_breakdown).map(([name, value]) => ({
-    name,
-    value,
-  }))
+  const metrics = await getOverviewMetrics()
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6 md:p-10">
+    <main className="min-h-screen p-6 md:p-10">
       <div className="mx-auto grid max-w-6xl gap-6">
         <section>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard Giras</h1>
-          <p className="text-slate-600">Visão geral operacional baseada nos dados Olist</p>
+          <p className="text-slate-600">Porta de entrada com leitura executiva e acesso aos módulos de análise</p>
         </section>
 
         <section className="grid gap-4">
@@ -105,38 +101,58 @@ export default async function HomePage() {
           </Card>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-5">
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>Pedidos por status</CardTitle>
-              <CardDescription>Distribuição geral do funil de pedidos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <OrdersByStatusChart data={statusData} />
-            </CardContent>
-          </Card>
+        <section className="grid gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Módulos Principais</h2>
+            <p className="text-sm text-slate-600">Acesse as análises detalhadas em páginas separadas</p>
+          </div>
 
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Receita total</CardTitle>
-              <CardDescription>Somatório de pagamentos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-semibold text-slate-900">{toCurrency(metrics.total_revenue)}</p>
-            </CardContent>
-          </Card>
-        </section>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle>Pedidos</CardTitle>
+                <CardDescription>Status de pedidos e distribuição do funil operacional</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link
+                  href="/pedidos"
+                  className="inline-flex rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+                >
+                  Abrir módulo
+                </Link>
+              </CardContent>
+            </Card>
 
-        <section>
-          <Card>
-            <CardHeader>
-              <CardTitle>Receita por estado</CardTitle>
-              <CardDescription>Mapa coroplético com intensidade por receita</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SalesByStateMapDynamic data={salesByStateData} />
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Vendas</CardTitle>
+                <CardDescription>Evolução mensal e análise de receita por categoria</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link
+                  href="/vendas"
+                  className="inline-flex rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+                >
+                  Abrir módulo
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Regional</CardTitle>
+                <CardDescription>Mapa de receita por estado e ranking regional</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link
+                  href="/regional"
+                  className="inline-flex rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+                >
+                  Abrir módulo
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
         </section>
       </div>
     </main>
