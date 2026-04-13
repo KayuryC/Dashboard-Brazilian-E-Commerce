@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { HamburgerMenu } from "@/components/navigation/hamburger-menu"
 import "./globals.css"
 import "leaflet/dist/leaflet.css"
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="bg-slate-50 text-slate-900">
-        <HamburgerMenu />
+        <Suspense fallback={null}>
+          <HamburgerMenu />
+        </Suspense>
         <div className="pt-20">{children}</div>
       </body>
     </html>

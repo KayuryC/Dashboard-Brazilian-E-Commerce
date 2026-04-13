@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { BarChart3, Clock3, Home, Layers3, Menu, X } from "lucide-react"
 import { type ComponentType, useMemo, useState } from "react"
 
@@ -71,7 +71,9 @@ const titleByPath: Record<string, string> = {
 export function HamburgerMenu() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const inStatisticsModule = pathname === "/statistics" || pathname.startsWith("/statistics/")
+  const searchParamsValue = searchParams.toString()
 
   const currentTitle = useMemo(() => (inStatisticsModule ? "Estatística e Probabilidade" : titleByPath[pathname] ?? "Dashboard"), [inStatisticsModule, pathname])
   const menuItems = inStatisticsModule ? statisticsNavItems : navItems
@@ -131,11 +133,16 @@ export function HamburgerMenu() {
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
+            const shouldKeepFilters = inStatisticsModule && item.href.startsWith("/statistics")
+            const resolvedHref =
+              shouldKeepFilters && searchParamsValue
+                ? `${item.href}?${searchParamsValue}`
+                : item.href
 
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={resolvedHref}
                 onClick={() => setOpen(false)}
                 className={cn(
                   "rounded-xl border p-3 transition",
