@@ -18,6 +18,7 @@ type GeoJsonData = {
 
 type SalesByStateMapProps = {
   data: SalesByStatePoint[]
+  highlightState?: string
 }
 
 function toCurrency(value: number) {
@@ -40,7 +41,7 @@ function getColorScale(value: number, max: number): string {
   return "#e2e8f0"
 }
 
-export function SalesByStateMap({ data }: SalesByStateMapProps) {
+export function SalesByStateMap({ data, highlightState }: SalesByStateMapProps) {
   const [geoData, setGeoData] = useState<GeoJsonData | null>(null)
 
   useEffect(() => {
@@ -77,6 +78,8 @@ export function SalesByStateMap({ data }: SalesByStateMapProps) {
     return data.reduce((acc, point) => Math.max(acc, point.revenue), 0)
   }, [data])
 
+  const normalizedHighlightState = highlightState?.toUpperCase()
+
   if (!geoData) {
     return (
       <div className="flex h-[460px] items-center justify-center rounded-lg border bg-slate-100 text-sm text-slate-600">
@@ -103,13 +106,14 @@ export function SalesByStateMap({ data }: SalesByStateMapProps) {
           style={(feature) => {
             const uf = String(feature?.properties?.sigla ?? "").toUpperCase()
             const revenue = stateMetricsByUf.get(uf)?.revenue ?? 0
+            const isHighlighted = normalizedHighlightState === uf
 
             return {
               fillColor: getColorScale(revenue, maxRevenue),
-              weight: 1,
+              weight: isHighlighted ? 2.4 : 1,
               opacity: 1,
-              color: "#334155",
-              fillOpacity: 0.78,
+              color: isHighlighted ? "#0f172a" : "#334155",
+              fillOpacity: isHighlighted ? 0.92 : 0.78,
             }
           }}
           onEachFeature={(feature, layer) => {

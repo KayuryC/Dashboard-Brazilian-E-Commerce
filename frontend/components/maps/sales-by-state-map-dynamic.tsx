@@ -18,8 +18,9 @@ const SalesByStateMap = dynamic(
 
 type SalesByStateMapDynamicProps = {
   data: SalesByStatePoint[]
+  highlightState?: string
 }
 
-export function SalesByStateMapDynamic({ data }: SalesByStateMapDynamicProps) {
-  return <SalesByStateMap data={data} />
+export function SalesByStateMapDynamic({ data, highlightState }: SalesByStateMapDynamicProps) {
+  return <SalesByStateMap data={data} highlightState={highlightState} />
 }

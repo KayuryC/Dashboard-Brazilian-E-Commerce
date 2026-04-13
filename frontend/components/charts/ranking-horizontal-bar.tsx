@@ -9,18 +9,26 @@ type RankingHorizontalBarPoint = {
 
 type RankingHorizontalBarProps = {
   data: RankingHorizontalBarPoint[]
-  valueFormatter?: (value: number) => string
+  valueFormat?: "number" | "currency"
   barColor?: string
   height?: number
 }
 
-function defaultValueFormatter(value: number) {
+function formatValue(value: number, valueFormat: "number" | "currency") {
+  if (valueFormat === "currency") {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      maximumFractionDigits: 0,
+    }).format(value)
+  }
+
   return value.toLocaleString("pt-BR")
 }
 
 export function RankingHorizontalBar({
   data,
-  valueFormatter = defaultValueFormatter,
+  valueFormat = "number",
   barColor = "#0f172a",
   height = 420,
 }: RankingHorizontalBarProps) {
@@ -34,15 +42,25 @@ export function RankingHorizontalBar({
           <XAxis
             type="number"
             tick={{ fill: "#475569", fontSize: 12 }}
-            tickFormatter={(value) =>
-              new Intl.NumberFormat("pt-BR", {
+            tickFormatter={(value) => {
+              if (valueFormat === "currency") {
+                return new Intl.NumberFormat("pt-BR", {
+                  notation: "compact",
+                  compactDisplay: "short",
+                  style: "currency",
+                  currency: "BRL",
+                  maximumFractionDigits: 1,
+                }).format(value)
+              }
+
+              return new Intl.NumberFormat("pt-BR", {
                 notation: "compact",
                 compactDisplay: "short",
               }).format(value)
-            }
+            }}
           />
           <YAxis type="category" dataKey="label" tick={{ fill: "#334155", fontSize: 11 }} width={180} />
-          <Tooltip formatter={(value: number) => valueFormatter(value)} />
+          <Tooltip formatter={(value: number) => formatValue(value, valueFormat)} />
           <Bar dataKey="value" fill={barColor} radius={[0, 6, 6, 0]} />
         </BarChart>
       </ResponsiveContainer>
