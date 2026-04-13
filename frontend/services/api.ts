@@ -10,10 +10,38 @@ import {
 } from "@/lib/types"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const REVALIDATE_SECONDS = 300
 
-export async function getOverviewMetrics(): Promise<OverviewMetrics> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/metrics/overview`, {
-    cache: "no-store",
+export type DashboardFiltersParams = {
+  state?: string
+  city?: string
+  startDate?: string
+  endDate?: string
+}
+
+function buildFilteredUrl(path: string, filters?: DashboardFiltersParams): string {
+  const params = new URLSearchParams()
+
+  if (filters?.state) {
+    params.set("state", filters.state)
+  }
+  if (filters?.city) {
+    params.set("city", filters.city)
+  }
+  if (filters?.startDate) {
+    params.set("start_date", filters.startDate)
+  }
+  if (filters?.endDate) {
+    params.set("end_date", filters.endDate)
+  }
+
+  const query = params.toString()
+  return `${API_BASE_URL}${path}${query ? `?${query}` : ""}`
+}
+
+export async function getOverviewMetrics(filters?: DashboardFiltersParams): Promise<OverviewMetrics> {
+  const res = await fetch(buildFilteredUrl("/api/v1/metrics/overview", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
   })
 
   if (!res.ok) {
@@ -23,9 +51,9 @@ export async function getOverviewMetrics(): Promise<OverviewMetrics> {
   return res.json()
 }
 
-export async function getSalesByState(): Promise<SalesByStatePoint[]> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/sales/by-state`, {
-    cache: "no-store",
+export async function getSalesByState(filters?: DashboardFiltersParams): Promise<SalesByStatePoint[]> {
+  const res = await fetch(buildFilteredUrl("/api/v1/sales/by-state", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
   })
 
   if (!res.ok) {
@@ -35,9 +63,9 @@ export async function getSalesByState(): Promise<SalesByStatePoint[]> {
   return res.json()
 }
 
-export async function getSalesByCity(): Promise<SalesByCityPoint[]> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/sales/by-city`, {
-    cache: "no-store",
+export async function getSalesByCity(filters?: DashboardFiltersParams): Promise<SalesByCityPoint[]> {
+  const res = await fetch(buildFilteredUrl("/api/v1/sales/by-city", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
   })
 
   if (!res.ok) {
@@ -47,9 +75,9 @@ export async function getSalesByCity(): Promise<SalesByCityPoint[]> {
   return res.json()
 }
 
-export async function getOrdersByStatus(): Promise<OrdersByStatusPoint[]> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/orders/by-status`, {
-    cache: "no-store",
+export async function getOrdersByStatus(filters?: DashboardFiltersParams): Promise<OrdersByStatusPoint[]> {
+  const res = await fetch(buildFilteredUrl("/api/v1/orders/by-status", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
   })
 
   if (!res.ok) {
@@ -59,9 +87,9 @@ export async function getOrdersByStatus(): Promise<OrdersByStatusPoint[]> {
   return res.json()
 }
 
-export async function getSalesMonthly(): Promise<SalesMonthlyPoint[]> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/sales/monthly`, {
-    cache: "no-store",
+export async function getSalesMonthly(filters?: DashboardFiltersParams): Promise<SalesMonthlyPoint[]> {
+  const res = await fetch(buildFilteredUrl("/api/v1/sales/monthly", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
   })
 
   if (!res.ok) {
@@ -71,9 +99,9 @@ export async function getSalesMonthly(): Promise<SalesMonthlyPoint[]> {
   return res.json()
 }
 
-export async function getSalesByCategory(): Promise<SalesByCategoryPoint[]> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/sales/by-category`, {
-    cache: "no-store",
+export async function getSalesByCategory(filters?: DashboardFiltersParams): Promise<SalesByCategoryPoint[]> {
+  const res = await fetch(buildFilteredUrl("/api/v1/sales/by-category", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
   })
 
   if (!res.ok) {
@@ -83,9 +111,9 @@ export async function getSalesByCategory(): Promise<SalesByCategoryPoint[]> {
   return res.json()
 }
 
-export async function getOrderValueDescriptiveStats(): Promise<OrderValueDescriptiveStats> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/statistics/descriptive/order-values`, {
-    cache: "no-store",
+export async function getOrderValueDescriptiveStats(filters?: DashboardFiltersParams): Promise<OrderValueDescriptiveStats> {
+  const res = await fetch(buildFilteredUrl("/api/v1/statistics/descriptive/order-values", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
   })
 
   if (!res.ok) {
@@ -95,9 +123,9 @@ export async function getOrderValueDescriptiveStats(): Promise<OrderValueDescrip
   return res.json()
 }
 
-export async function getDeliveryTimeAnalysis(): Promise<DeliveryTimeAnalysis> {
-  const res = await fetch(`${API_BASE_URL}/api/v1/statistics/descriptive/delivery-time`, {
-    cache: "no-store",
+export async function getDeliveryTimeAnalysis(filters?: DashboardFiltersParams): Promise<DeliveryTimeAnalysis> {
+  const res = await fetch(buildFilteredUrl("/api/v1/statistics/descriptive/delivery-time", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
   })
 
   if (!res.ok) {

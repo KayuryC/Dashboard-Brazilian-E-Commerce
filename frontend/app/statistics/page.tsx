@@ -1,3 +1,4 @@
+import { StatisticsGlobalFilters } from "@/components/filters/statistics-global-filters"
 import { KpiSparkline } from "@/components/charts/kpi-sparkline"
 import { OrdersByStatusChart } from "@/components/charts/orders-by-status"
 import { ParetoCategoryChart } from "@/components/charts/pareto-category-chart"
@@ -6,6 +7,13 @@ import { SalesMonthlyChart } from "@/components/charts/sales-monthly-chart"
 import { SalesByStateMapDynamic } from "@/components/maps/sales-by-state-map-dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
+  buildActiveDashboardFilters,
+  buildDateScopeFilters,
+  buildStatisticsContextLabel,
+  parseStatisticsFilters,
+  type StatisticsSearchParams,
+} from "@/lib/statistics-filters"
+import {
   getOrdersByStatus,
   getOverviewMetrics,
   getSalesByCategory,
@@ -13,6 +21,10 @@ import {
   getSalesByState,
   getSalesMonthly,
 } from "@/services/api"
+
+type StatisticsPageProps = {
+  searchParams?: StatisticsSearchParams | Promise<StatisticsSearchParams>
+}
 
 function toCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -44,14 +56,40 @@ function toCompactNumber(value: number) {
   }).format(value)
 }
 
-export default async function StatisticsPage() {
-  const [metrics, ordersByStatus, salesMonthly, salesByCategory, salesByState, salesByCity] = await Promise.all([
-    getOverviewMetrics(),
-    getOrdersByStatus(),
-    getSalesMonthly(),
-    getSalesByCategory(),
-    getSalesByState(),
-    getSalesByCity(),
+export default async function StatisticsPage({ searchParams }: StatisticsPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : {}
+  const selectedFilters = parseStatisticsFilters(resolvedSearchParams)
+
+  const dateScopeFilters = buildDateScopeFilters(selectedFilters)
+
+  const [salesByStateComparison, cityOptionsData] = await Promise.all([
+    getSalesByState(dateScopeFilters),
+    selectedFilters.state
+      ? getSalesByCity({
+          ...dateScopeFilters,
+          state: selectedFilters.state,
+        })
+      : Promise.resolve([]),
+  ])
+
+  const stateOptions = salesByStateComparison
+    .map((item) => item.customer_state)
+    .filter((value, index, array) => /^[A-Z]{2}$/.test(value) && array.indexOf(value) === index)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"))
+
+  const cityOptions = cityOptionsData
+    .map((item) => item.customer_city)
+    .filter((value, index, array) => value && array.indexOf(value) === index)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"))
+
+  const activeFilters = buildActiveDashboardFilters(selectedFilters)
+
+  const [metrics, ordersByStatus, salesMonthly, salesByCategory, salesByCity] = await Promise.all([
+    getOverviewMetrics(activeFilters),
+    getOrdersByStatus(activeFilters),
+    getSalesMonthly(activeFilters),
+    getSalesByCategory(activeFilters),
+    getSalesByCity(activeFilters),
   ])
 
   const ordersChartData = ordersByStatus.map((item) => ({
@@ -80,8 +118,20 @@ export default async function StatisticsPage() {
   const topCityByRevenue = salesByCity[0]
   const topCityByOrders = [...salesByCity].sort((a, b) => b.orders - a.orders)[0]
   const topCategory = salesByCategory[0]
-  const topState = salesByState[0]
-  const topStates = salesByState.slice(0, 3)
+  const topState = salesByStateComparison[0]
+  const topStates = salesByStateComparison.slice(0, 3)
+
+  const totalBrazilRevenue = salesByStateComparison.reduce((sum, item) => sum + item.revenue, 0)
+  const selectedStateComparison = selectedFilters.state
+    ? salesByStateComparison.find((item) => item.customer_state.toUpperCase() === selectedFilters.state)
+    : undefined
+  const selectedStateShare =
+    selectedStateComparison && totalBrazilRevenue > 0
+      ? (selectedStateComparison.revenue / totalBrazilRevenue) * 100
+      : 0
+  const selectedStateRank = selectedStateComparison
+    ? salesByStateComparison.findIndex((item) => item.customer_state.toUpperCase() === selectedFilters.state) + 1
+    : 0
 
   const categoryRankingData = salesByCategory.slice(0, 10).map((item) => ({
     label: item.product_category_name_english,
@@ -93,7 +143,7 @@ export default async function StatisticsPage() {
     value: item.revenue,
   }))
 
-  const stateRankingData = salesByState.slice(0, 10).map((item) => ({
+  const stateRankingData = salesByStateComparison.slice(0, 10).map((item) => ({
     label: item.customer_state,
     value: item.revenue,
   }))
@@ -112,6 +162,8 @@ export default async function StatisticsPage() {
   const paretoTopCount = Math.max(1, Math.ceil(categoriesForPareto.length * 0.2))
   const paretoTopShare = paretoData[paretoTopCount - 1]?.cumulative_share ?? 0
 
+  const contextLabel = buildStatisticsContextLabel(selectedFilters)
+
   return (
     <main className="min-h-screen p-6 md:p-10">
       <div className="mx-auto grid w-full max-w-[1560px] gap-8">
@@ -122,10 +174,24 @@ export default async function StatisticsPage() {
           </p>
         </section>
 
+        <StatisticsGlobalFilters
+          currentFilters={{
+            state: selectedFilters.state,
+            city: selectedFilters.city,
+            startDate: selectedFilters.startDate,
+            endDate: selectedFilters.endDate,
+          }}
+          stateOptions={stateOptions}
+          cityOptions={cityOptions}
+        />
+
         <section className="grid gap-6">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">Resumo Executivo + Destaques</h2>
             <p className="text-sm text-slate-600">Quem lidera, onde está concentrado e o que domina a operação</p>
+            <p className="mt-2 text-sm text-slate-700">
+              <span className="font-medium text-slate-900">Contexto atual:</span> {contextLabel}
+            </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -136,7 +202,9 @@ export default async function StatisticsPage() {
               </CardHeader>
               <CardContent className="grid gap-3">
                 <p className="text-sm text-slate-600">
-                  Volume alto concentrado em <span className="font-medium text-slate-800">{dominantStatus?.label ?? "status líder"}</span> ({toPercentage(dominantStatusShare)}).
+                  Volume alto concentrado em{" "}
+                  <span className="font-medium text-slate-800">{dominantStatus?.label ?? "status líder"}</span>{" "}
+                  ({toPercentage(dominantStatusShare)}).
                 </p>
                 <KpiSparkline values={monthlyOrderSeries} color="#2563eb" />
               </CardContent>
@@ -149,7 +217,9 @@ export default async function StatisticsPage() {
               </CardHeader>
               <CardContent className="grid gap-3">
                 <p className="text-sm text-slate-600">
-                  Crescimento de <span className={`font-medium ${growthHighlightClass}`}>{toSignedPercentage(revenueGrowthPercentage)}</span> do início ao fim da série mensal.
+                  Crescimento de{" "}
+                  <span className={`font-medium ${growthHighlightClass}`}>{toSignedPercentage(revenueGrowthPercentage)}</span>{" "}
+                  do início ao fim da série mensal.
                 </p>
                 <KpiSparkline values={monthlyRevenueSeries} color="#059669" />
               </CardContent>
@@ -182,7 +252,9 @@ export default async function StatisticsPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardDescription>Nota média</CardDescription>
-                <CardTitle>{metrics.average_review_score.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}</CardTitle>
+                <CardTitle>
+                  {metrics.average_review_score.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-slate-600">
@@ -222,7 +294,9 @@ export default async function StatisticsPage() {
                 <CardDescription>KPI + contexto</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <p className="text-lg font-semibold text-slate-900">{topCityByRevenue?.customer_city ?? "Sem dados"}</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {topCityByRevenue?.customer_city ?? "Sem dados"}
+                </p>
                 <p className="text-sm text-slate-600">
                   {topCityByRevenue
                     ? `${toCurrency(topCityByRevenue.revenue)} • ${topCityByRevenue.orders.toLocaleString("pt-BR")} pedidos`
@@ -236,9 +310,6 @@ export default async function StatisticsPage() {
                       : "Sem dados"}
                   </span>
                 </p>
-                <p className="text-sm text-slate-600">
-                  A maior concentração de pedidos está nas grandes capitais, com destaque para {topCityByRevenue?.customer_city ?? "a cidade líder"}.
-                </p>
               </CardContent>
             </Card>
 
@@ -248,14 +319,13 @@ export default async function StatisticsPage() {
                 <CardDescription>Produto/categoria mais vendida</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <p className="text-lg font-semibold text-slate-900">{topCategory?.product_category_name_english ?? "Sem dados"}</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {topCategory?.product_category_name_english ?? "Sem dados"}
+                </p>
                 <p className="text-sm text-slate-600">
                   {topCategory
                     ? `${toCurrency(topCategory.revenue)} • ${topCategory.items.toLocaleString("pt-BR")} itens`
                     : "Sem dados de categoria"}
-                </p>
-                <p className="text-sm text-slate-600">
-                  A categoria {topCategory?.product_category_name_english ?? "líder"} lidera o faturamento, indicando alta demanda nesse segmento.
                 </p>
               </CardContent>
             </Card>
@@ -272,12 +342,28 @@ export default async function StatisticsPage() {
                     ? `${dominantStatus.value.toLocaleString("pt-BR")} pedidos • ${toPercentage(dominantStatusShare)}`
                     : "Sem dados de status"}
                 </p>
-                <p className="text-sm text-slate-600">
-                  O funil operacional é dominado por {dominantStatus?.label?.toLowerCase() ?? "um status principal"}, sustentando previsibilidade do fluxo logístico.
-                </p>
               </CardContent>
             </Card>
           </div>
+
+          {selectedFilters.state && selectedStateComparison ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Comparativo de {selectedFilters.state}</CardTitle>
+                <CardDescription>Posicionamento do estado filtrado em relação ao Brasil</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-2 md:grid-cols-2">
+                <p className="text-sm text-slate-700">
+                  Participação na receita nacional:{" "}
+                  <span className="font-semibold text-slate-900">{toPercentage(selectedStateShare)}</span>
+                </p>
+                <p className="text-sm text-slate-700">
+                  Posição no ranking nacional:{" "}
+                  <span className="font-semibold text-slate-900">{selectedStateRank}º</span>
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <div className="grid gap-6 2xl:grid-cols-5">
             <Card className="2xl:col-span-3">
@@ -288,7 +374,7 @@ export default async function StatisticsPage() {
               <CardContent>
                 <RankingHorizontalBar
                   data={categoryRankingData}
-                  valueFormatter={toCurrency}
+                  valueFormat="currency"
                   barColor="#1d4ed8"
                   height={460}
                 />
@@ -301,12 +387,9 @@ export default async function StatisticsPage() {
                 <CardDescription>Ranking visível de concentração regional</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-slate-600">
-                  A maior concentração de pedidos está nas grandes capitais, com destaque para {topCityByRevenue?.customer_city ?? "a cidade líder"}.
-                </p>
                 <RankingHorizontalBar
                   data={cityRankingData}
-                  valueFormatter={toCurrency}
+                  valueFormat="currency"
                   barColor="#0f766e"
                   height={420}
                 />
@@ -335,12 +418,15 @@ export default async function StatisticsPage() {
               <CardContent className="space-y-4">
                 <RankingHorizontalBar
                   data={stateRankingData}
-                  valueFormatter={toCurrency}
+                  valueFormat="currency"
                   barColor="#0f172a"
                   height={320}
                 />
                 {topStates.map((state, index) => (
-                  <div key={state.customer_state} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                  <div
+                    key={state.customer_state}
+                    className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
+                  >
                     <span className="text-sm font-medium text-slate-800">
                       {index + 1}. {state.customer_state}
                     </span>
@@ -377,9 +463,14 @@ export default async function StatisticsPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {ordersByStatus.map((item) => (
-                  <div key={item.status} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                  <div
+                    key={item.status}
+                    className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
+                  >
                     <span className="text-sm text-slate-700">{item.label}</span>
-                    <span className="text-sm font-semibold text-slate-900">{item.value.toLocaleString("pt-BR")}</span>
+                    <span className="text-sm font-semibold text-slate-900">
+                      {item.value.toLocaleString("pt-BR")}
+                    </span>
                   </div>
                 ))}
               </CardContent>
@@ -399,10 +490,13 @@ export default async function StatisticsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Receita por estado</CardTitle>
-              <CardDescription>Mapa coroplético e leitura regional</CardDescription>
+              <CardDescription>Mapa coroplético e leitura regional comparativa</CardDescription>
             </CardHeader>
             <CardContent>
-              <SalesByStateMapDynamic data={salesByState} />
+              <SalesByStateMapDynamic
+                data={salesByStateComparison}
+                highlightState={selectedFilters.state || undefined}
+              />
             </CardContent>
           </Card>
         </section>
