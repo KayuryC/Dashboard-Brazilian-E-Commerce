@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from services.filters import DashboardFilters, apply_dashboard_filters
 from services.preprocessing import get_consolidated_dataset
 
 STATUS_TRANSLATION: dict[str, str] = {
@@ -18,8 +19,12 @@ STATUS_TRANSLATION: dict[str, str] = {
 }
 
 
-def get_orders_by_status(data_dir: Path) -> pd.DataFrame:
+def get_orders_by_status(
+    data_dir: Path,
+    filters: DashboardFilters | None = None,
+) -> pd.DataFrame:
     df = get_consolidated_dataset(data_dir)
+    df = apply_dashboard_filters(df, filters)
     order_level = df.drop_duplicates(subset=["order_id"])
 
     result = (

@@ -3,11 +3,16 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from services.filters import DashboardFilters, apply_dashboard_filters
 from services.preprocessing import get_consolidated_dataset
 
 
-def get_delivery_performance(data_dir: Path) -> pd.DataFrame:
+def get_delivery_performance(
+    data_dir: Path,
+    filters: DashboardFilters | None = None,
+) -> pd.DataFrame:
     df = get_consolidated_dataset(data_dir)
+    df = apply_dashboard_filters(df, filters)
     order_level = df.drop_duplicates(subset=["order_id"])
 
     return (
@@ -27,8 +32,13 @@ def _safe_round(value: float) -> float:
     return round(float(value), 2)
 
 
-def get_delivery_time_analysis(data_dir: Path, bins: int = 10) -> dict[str, object]:
+def get_delivery_time_analysis(
+    data_dir: Path,
+    bins: int = 10,
+    filters: DashboardFilters | None = None,
+) -> dict[str, object]:
     dataframe = get_consolidated_dataset(data_dir)
+    dataframe = apply_dashboard_filters(dataframe, filters)
 
     if dataframe.empty:
         return {

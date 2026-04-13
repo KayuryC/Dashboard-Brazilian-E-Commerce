@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from datetime import date
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.config import RAW_DATA_DIR
 from schemas.dashboard import (
@@ -16,6 +18,7 @@ from schemas.dashboard import (
 )
 from services.delivery import get_delivery_time_analysis
 from services.descriptive import get_order_value_descriptive_stats
+from services.filters import DashboardFilters
 from services.orders import get_orders_by_status
 from services.overview import build_overview_metrics
 from services.sales import (
@@ -28,43 +31,72 @@ from services.sales import (
 router = APIRouter(prefix="/api/v1", tags=["dashboard"])
 
 
+def _build_dashboard_filters(
+    state: str | None = Query(default=None),
+    city: str | None = Query(default=None),
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
+) -> DashboardFilters:
+    if start_date is not None and end_date is not None and start_date > end_date:
+        raise HTTPException(status_code=422, detail="start_date cannot be greater than end_date")
+
+    return DashboardFilters(
+        state=state,
+        city=city,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
 @router.get("/health", response_model=HealthResponse)
 def health_check() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
 @router.get("/metrics/overview", response_model=OverviewMetrics)
-def metrics_overview() -> OverviewMetrics:
-    return build_overview_metrics(RAW_DATA_DIR)
+def metrics_overview(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> OverviewMetrics:
+    return build_overview_metrics(RAW_DATA_DIR, filters)
 
 
 @router.get("/orders/by-status", response_model=list[OrdersByStatusPoint])
-def orders_by_status() -> list[OrdersByStatusPoint]:
-    dataframe = get_orders_by_status(RAW_DATA_DIR)
+def orders_by_status(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> list[OrdersByStatusPoint]:
+    dataframe = get_orders_by_status(RAW_DATA_DIR, filters)
     return [OrdersByStatusPoint(**record) for record in dataframe.to_dict(orient="records")]
 
 
 @router.get("/sales/monthly", response_model=list[SalesMonthlyPoint])
-def sales_monthly() -> list[SalesMonthlyPoint]:
-    dataframe = get_sales_monthly(RAW_DATA_DIR)
+def sales_monthly(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> list[SalesMonthlyPoint]:
+    dataframe = get_sales_monthly(RAW_DATA_DIR, filters)
     return [SalesMonthlyPoint(**record) for record in dataframe.to_dict(orient="records")]
 
 
 @router.get("/sales/by-state", response_model=list[SalesByStatePoint])
-def sales_by_state() -> list[SalesByStatePoint]:
-    dataframe = get_sales_by_state(RAW_DATA_DIR)
+def sales_by_state(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> list[SalesByStatePoint]:
+    dataframe = get_sales_by_state(RAW_DATA_DIR, filters)
     return [SalesByStatePoint(**record) for record in dataframe.to_dict(orient="records")]
 
 
 @router.get("/sales/by-city", response_model=list[SalesByCityPoint])
-def sales_by_city() -> list[SalesByCityPoint]:
-    dataframe = get_sales_by_city(RAW_DATA_DIR)
+def sales_by_city(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> list[SalesByCityPoint]:
+    dataframe = get_sales_by_city(RAW_DATA_DIR, filters)
     return [SalesByCityPoint(**record) for record in dataframe.to_dict(orient="records")]
 
 
 @router.get("/sales/by-category", response_model=list[SalesByCategoryPoint])
-def sales_by_category() -> list[SalesByCategoryPoint]:
-    dataframe = get_sales_by_category(RAW_DATA_DIR)
+def sales_by_category(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> list[SalesByCategoryPoint]:
+    dataframe = get_sales_by_category(RAW_DATA_DIR, filters)
     return [SalesByCategoryPoint(**record) for record in dataframe.to_dict(orient="records")]
 
 
@@ -72,8 +104,10 @@ def sales_by_category() -> list[SalesByCategoryPoint]:
     "/statistics/descriptive/order-values",
     response_model=OrderValueDescriptiveStats,
 )
-def statistics_descriptive_order_values() -> OrderValueDescriptiveStats:
-    stats = get_order_value_descriptive_stats(RAW_DATA_DIR)
+def statistics_descriptive_order_values(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> OrderValueDescriptiveStats:
+    stats = get_order_value_descriptive_stats(RAW_DATA_DIR, filters=filters)
     return OrderValueDescriptiveStats(
         mean_value=stats["mean_value"],
         median_value=stats["median_value"],
@@ -88,8 +122,10 @@ def statistics_descriptive_order_values() -> OrderValueDescriptiveStats:
     "/statistics/descriptive/delivery-time",
     response_model=DeliveryTimeAnalysis,
 )
-def statistics_descriptive_delivery_time() -> DeliveryTimeAnalysis:
-    stats = get_delivery_time_analysis(RAW_DATA_DIR)
+def statistics_descriptive_delivery_time(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> DeliveryTimeAnalysis:
+    stats = get_delivery_time_analysis(RAW_DATA_DIR, filters=filters)
     return DeliveryTimeAnalysis(
         avg_delivery_days=stats["avg_delivery_days"],
         avg_estimated_days=stats["avg_estimated_days"],

@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 from schemas.dashboard import OverviewMetrics
+from services.filters import DashboardFilters, apply_dashboard_filters
 from services.preprocessing import get_consolidated_dataset
 
 
@@ -17,8 +18,12 @@ def _build_status_breakdown(order_level: pd.DataFrame) -> dict[str, int]:
     }
 
 
-def build_overview_metrics(data_dir: Path) -> OverviewMetrics:
+def build_overview_metrics(
+    data_dir: Path,
+    filters: DashboardFilters | None = None,
+) -> OverviewMetrics:
     consolidated_df = get_consolidated_dataset(data_dir)
+    consolidated_df = apply_dashboard_filters(consolidated_df, filters)
 
     if consolidated_df.empty:
         return OverviewMetrics(
