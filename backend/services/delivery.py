@@ -32,6 +32,58 @@ def _safe_round(value: float) -> float:
     return round(float(value), 2)
 
 
+def _build_monthly_delivery_trend(order_level: pd.DataFrame) -> list[dict[str, object]]:
+    required_columns = {"order_id", "purchase_year_month", "delivery_time_days", "estimated_delivery_time_days"}
+    if not required_columns.issubset(set(order_level.columns)):
+        return []
+
+    trend_df = order_level.copy()
+
+    if "order_delivered_customer_date" in trend_df.columns:
+        trend_df = trend_df[trend_df["order_delivered_customer_date"].notna()].copy()
+
+    if trend_df.empty:
+        return []
+
+    trend_df["delivery_time_days"] = pd.to_numeric(trend_df["delivery_time_days"], errors="coerce")
+    trend_df["estimated_delivery_time_days"] = pd.to_numeric(
+        trend_df["estimated_delivery_time_days"],
+        errors="coerce",
+    )
+
+    if "is_late" in trend_df.columns:
+        trend_df["is_late"] = trend_df["is_late"].fillna(False).astype(bool)
+    else:
+        trend_df["is_late"] = False
+
+    trend_df = trend_df.dropna(subset=["purchase_year_month"])
+    trend_df["purchase_year_month"] = trend_df["purchase_year_month"].astype(str)
+    trend_df = trend_df[trend_df["purchase_year_month"].str.fullmatch(r"\d{4}-\d{2}")]
+
+    if trend_df.empty:
+        return []
+
+    result = (
+        trend_df.groupby("purchase_year_month", as_index=False)
+        .agg(
+            avg_delivery_days=("delivery_time_days", "mean"),
+            avg_estimated_days=("estimated_delivery_time_days", "mean"),
+            late_delivery_percentage=("is_late", "mean"),
+            delivered_orders=("order_id", "nunique"),
+        )
+        .sort_values("purchase_year_month")
+    )
+
+    result["avg_delivery_days"] = result["avg_delivery_days"].fillna(0).astype(float).round(2)
+    result["avg_estimated_days"] = result["avg_estimated_days"].fillna(0).astype(float).round(2)
+    result["late_delivery_percentage"] = (
+        result["late_delivery_percentage"].fillna(0).astype(float).mul(100).round(2)
+    )
+    result["delivered_orders"] = result["delivered_orders"].fillna(0).astype(int)
+
+    return result.to_dict(orient="records")
+
+
 def _build_empty_delivery_risk_response() -> dict[str, object]:
     return {
         "probability_late_delivery": 0.0,
@@ -152,6 +204,7 @@ def get_delivery_time_analysis(
             "std_delivery_days": 0.0,
             "late_delivery_percentage": 0.0,
             "histogram": [],
+            "monthly_trend": [],
         }
 
     order_level = dataframe.drop_duplicates(subset=["order_id"])
@@ -162,6 +215,7 @@ def get_delivery_time_analysis(
             "std_delivery_days": 0.0,
             "late_delivery_percentage": 0.0,
             "histogram": [],
+            "monthly_trend": [],
         }
 
     delivered_orders = order_level[order_level["order_delivered_customer_date"].notna()].copy()
@@ -173,6 +227,7 @@ def get_delivery_time_analysis(
             "std_delivery_days": 0.0,
             "late_delivery_percentage": 0.0,
             "histogram": [],
+            "monthly_trend": [],
         }
 
     delivery_days = pd.to_numeric(delivered_orders["delivery_time_days"], errors="coerce").dropna()
@@ -185,6 +240,7 @@ def get_delivery_time_analysis(
             "std_delivery_days": 0.0,
             "late_delivery_percentage": 0.0,
             "histogram": [],
+            "monthly_trend": [],
         }
 
     avg_delivery_days = _safe_round(delivery_days.mean())
@@ -212,10 +268,13 @@ def get_delivery_time_analysis(
             }
         )
 
+    monthly_trend = _build_monthly_delivery_trend(order_level)
+
     return {
         "avg_delivery_days": avg_delivery_days,
         "avg_estimated_days": avg_estimated_days,
         "std_delivery_days": std_delivery_days,
         "late_delivery_percentage": late_delivery_percentage,
         "histogram": histogram,
+        "monthly_trend": monthly_trend,
     }

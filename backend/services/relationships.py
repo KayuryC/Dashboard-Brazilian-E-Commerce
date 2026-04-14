@@ -6,6 +6,12 @@ from services.filters import DashboardFilters, apply_dashboard_filters
 from services.preprocessing import get_consolidated_dataset
 
 MAX_SCATTER_POINTS = 2500
+CORRELATION_VARIABLES: list[tuple[str, str]] = [
+    ("order_value", "Valor do pedido"),
+    ("delivery_time_days", "Tempo de entrega"),
+    ("delay_days", "Atraso (dias)"),
+    ("review_score", "Nota de avaliacao"),
+]
 
 
 def _safe_round(value: float) -> float:
@@ -126,6 +132,41 @@ def _build_state_behavior(order_level: pd.DataFrame, value_column: str, top_n: i
     return grouped.to_dict(orient="records")
 
 
+def _build_correlation_matrix(order_level: pd.DataFrame, value_column: str) -> list[dict[str, object]]:
+    correlation_df = pd.DataFrame(
+        {
+            "order_value": pd.to_numeric(order_level.get(value_column), errors="coerce"),
+            "delivery_time_days": pd.to_numeric(order_level.get("delivery_time_days"), errors="coerce"),
+            "delay_days": pd.to_numeric(order_level.get("delay_days"), errors="coerce"),
+            "review_score": pd.to_numeric(order_level.get("review_score"), errors="coerce"),
+        }
+    )
+
+    if correlation_df.empty:
+        return []
+
+    matrix = correlation_df.corr(numeric_only=True)
+    if matrix.empty:
+        return []
+
+    cells: list[dict[str, object]] = []
+    for x_key, x_label in CORRELATION_VARIABLES:
+        for y_key, y_label in CORRELATION_VARIABLES:
+            raw_value = matrix.loc[x_key, y_key] if x_key in matrix.index and y_key in matrix.columns else 0.0
+            correlation = 0.0 if pd.isna(raw_value) else _safe_round(float(raw_value))
+            cells.append(
+                {
+                    "x_key": x_key,
+                    "y_key": y_key,
+                    "x_label": x_label,
+                    "y_label": y_label,
+                    "correlation": correlation,
+                }
+            )
+
+    return cells
+
+
 def get_relationships_analysis(
     data_dir: Path,
     filters: DashboardFilters | None = None,
@@ -145,6 +186,7 @@ def get_relationships_analysis(
             "scatter": [],
             "review_score_by_delivery_status": [],
             "top_states_behavior": [],
+            "correlation_matrix": [],
         }
 
     order_level = dataframe.drop_duplicates(subset=["order_id"]).copy()
@@ -181,4 +223,5 @@ def get_relationships_analysis(
         "scatter": _build_scatter_points(order_level, value_column),
         "review_score_by_delivery_status": _build_review_score_boxplot(order_level),
         "top_states_behavior": _build_state_behavior(order_level, value_column, top_n=top_states),
+        "correlation_matrix": _build_correlation_matrix(order_level, value_column),
     }

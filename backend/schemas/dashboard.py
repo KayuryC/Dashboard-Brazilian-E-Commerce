@@ -86,12 +86,21 @@ class DeliveryHistogramBin(BaseModel):
     count: int
 
 
+class DeliveryMonthlyTrendPoint(BaseModel):
+    purchase_year_month: str
+    avg_delivery_days: float
+    avg_estimated_days: float
+    late_delivery_percentage: float
+    delivered_orders: int
+
+
 class DeliveryTimeAnalysis(BaseModel):
     avg_delivery_days: float
     avg_estimated_days: float
     std_delivery_days: float
     late_delivery_percentage: float
     histogram: list[DeliveryHistogramBin]
+    monthly_trend: list[DeliveryMonthlyTrendPoint]
 
 
 class DeliveryRiskEventProbability(BaseModel):
@@ -163,8 +172,17 @@ class RelationshipStateBehaviorPoint(BaseModel):
     late_delivery_percentage: float
 
 
+class RelationshipCorrelationHeatmapCell(BaseModel):
+    x_key: str
+    y_key: str
+    x_label: str
+    y_label: str
+    correlation: float
+
+
 class RelationshipsAnalysisResponse(BaseModel):
     correlations: RelationshipCorrelationMetrics
     scatter: list[RelationshipScatterPoint]
     review_score_by_delivery_status: list[RelationshipBoxplotGroup]
     top_states_behavior: list[RelationshipStateBehaviorPoint]
+    correlation_matrix: list[RelationshipCorrelationHeatmapCell]

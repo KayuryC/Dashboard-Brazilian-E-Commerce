@@ -10,6 +10,7 @@ from schemas.dashboard import (
     DeliveryRiskCdfPoint,
     DeliveryRiskEventProbability,
     DeliveryTimeAnalysis,
+    DeliveryMonthlyTrendPoint,
     DescriptiveHistogramBin,
     HealthResponse,
     OrdersByStatusPoint,
@@ -21,6 +22,7 @@ from schemas.dashboard import (
     SalesMonthlyPoint,
     RelationshipsAnalysisResponse,
     RelationshipBoxplotGroup,
+    RelationshipCorrelationHeatmapCell,
     RelationshipCorrelationMetrics,
     RelationshipScatterPoint,
     RelationshipStateBehaviorPoint,
@@ -178,6 +180,7 @@ def statistics_descriptive_delivery_time(
         std_delivery_days=stats["std_delivery_days"],
         late_delivery_percentage=stats["late_delivery_percentage"],
         histogram=[DeliveryHistogramBin(**item) for item in stats["histogram"]],
+        monthly_trend=[DeliveryMonthlyTrendPoint(**item) for item in stats["monthly_trend"]],
     )
 
 
@@ -215,4 +218,5 @@ def statistics_relationships(
             RelationshipBoxplotGroup(**item) for item in stats["review_score_by_delivery_status"]
         ],
         top_states_behavior=[RelationshipStateBehaviorPoint(**item) for item in stats["top_states_behavior"]],
+        correlation_matrix=[RelationshipCorrelationHeatmapCell(**item) for item in stats["correlation_matrix"]],
     )
