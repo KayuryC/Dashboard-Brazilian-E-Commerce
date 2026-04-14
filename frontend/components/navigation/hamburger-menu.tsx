@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import { BarChart3, Clock3, Home, Layers3, Menu, X } from "lucide-react"
+import { BarChart3, Clock3, Home, Layers3, Menu, ShieldAlert, X } from "lucide-react"
 import { type ComponentType, useMemo, useState } from "react"
 
 import { cn } from "@/lib/utils"
@@ -59,6 +59,18 @@ const statisticsNavItems: NavItem[] = [
     label: "Bloco 2 — Tempo de Entrega",
     description: "Médias, atraso e distribuição de dias",
     icon: Clock3,
+  },
+  {
+    href: "/statistics/bloco-3",
+    label: "Bloco 3 — Relacao entre Variaveis",
+    description: "Correlacoes, scatter e boxplot por grupos",
+    icon: Layers3,
+  },
+  {
+    href: "/statistics/bloco-4",
+    label: "Bloco 4 — Probabilidade e Risco",
+    description: "Chance de eventos criticos de entrega",
+    icon: ShieldAlert,
   },
 ]
 

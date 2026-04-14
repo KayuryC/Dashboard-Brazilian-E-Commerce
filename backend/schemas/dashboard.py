@@ -94,6 +94,28 @@ class DeliveryTimeAnalysis(BaseModel):
     histogram: list[DeliveryHistogramBin]
 
 
+class DeliveryRiskEventProbability(BaseModel):
+    event_key: str
+    label: str
+    probability: float
+    count: int
+
+
+class DeliveryRiskCdfPoint(BaseModel):
+    days: float
+    cumulative_probability: float
+
+
+class DeliveryRiskAnalysis(BaseModel):
+    probability_late_delivery: float
+    probability_delivery_up_to_7_days: float
+    probability_delivery_up_to_14_days: float
+    probability_delivery_over_30_days: float
+    total_delivered_orders: int
+    event_probabilities: list[DeliveryRiskEventProbability]
+    cdf: list[DeliveryRiskCdfPoint]
+
+
 class DatasetDateRange(BaseModel):
     min_date: date | None
     max_date: date | None
@@ -107,3 +129,42 @@ class StatisticsSummaryResponse(BaseModel):
     sales_by_category: list[SalesByCategoryPoint]
     top_cities_by_revenue: list[SalesByCityPoint]
     top_city_by_orders: SalesByCityPoint | None = None
+
+
+class RelationshipCorrelationMetrics(BaseModel):
+    value_delivery_correlation: float
+    delay_review_correlation: float
+    value_delivery_sample_size: int
+    delay_review_sample_size: int
+
+
+class RelationshipScatterPoint(BaseModel):
+    order_value: float
+    delivery_time_days: float
+
+
+class RelationshipBoxplotGroup(BaseModel):
+    group: str
+    count: int
+    min_value: float
+    q1_value: float
+    median_value: float
+    q3_value: float
+    max_value: float
+    mean_value: float
+
+
+class RelationshipStateBehaviorPoint(BaseModel):
+    customer_state: str
+    orders: int
+    avg_order_value: float
+    avg_delivery_days: float
+    avg_review_score: float
+    late_delivery_percentage: float
+
+
+class RelationshipsAnalysisResponse(BaseModel):
+    correlations: RelationshipCorrelationMetrics
+    scatter: list[RelationshipScatterPoint]
+    review_score_by_delivery_status: list[RelationshipBoxplotGroup]
+    top_states_behavior: list[RelationshipStateBehaviorPoint]

@@ -1,4 +1,5 @@
 import {
+  DeliveryRiskAnalysis,
   DatasetDateRange,
   DeliveryTimeAnalysis,
   OrderValueDescriptiveStats,
@@ -8,6 +9,7 @@ import {
   SalesByCityPoint,
   SalesByStatePoint,
   SalesMonthlyPoint,
+  RelationshipsAnalysisResponse,
   StatisticsSummaryResponse,
 } from "@/lib/types"
 
@@ -160,6 +162,32 @@ export async function getDeliveryTimeAnalysis(filters?: DashboardFiltersParams):
 
   if (!res.ok) {
     throw new Error("Failed to fetch delivery time analysis")
+  }
+
+  return res.json()
+}
+
+export async function getDeliveryRiskAnalysis(filters?: DashboardFiltersParams): Promise<DeliveryRiskAnalysis> {
+  const res = await fetch(buildFilteredUrl("/api/v1/statistics/probability/delivery-risk", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch delivery risk analysis")
+  }
+
+  return res.json()
+}
+
+export async function getRelationshipsAnalysis(
+  filters?: DashboardFiltersParams,
+): Promise<RelationshipsAnalysisResponse> {
+  const res = await fetch(buildFilteredUrl("/api/v1/statistics/relationships", filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch relationships analysis")
   }
 
   return res.json()

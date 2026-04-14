@@ -85,6 +85,28 @@ export type DeliveryTimeAnalysis = {
   histogram: DeliveryHistogramBin[]
 }
 
+export type DeliveryRiskEventProbability = {
+  event_key: string
+  label: string
+  probability: number
+  count: number
+}
+
+export type DeliveryRiskCdfPoint = {
+  days: number
+  cumulative_probability: number
+}
+
+export type DeliveryRiskAnalysis = {
+  probability_late_delivery: number
+  probability_delivery_up_to_7_days: number
+  probability_delivery_up_to_14_days: number
+  probability_delivery_over_30_days: number
+  total_delivered_orders: number
+  event_probabilities: DeliveryRiskEventProbability[]
+  cdf: DeliveryRiskCdfPoint[]
+}
+
 export type DatasetDateRange = {
   min_date: string | null
   max_date: string | null
@@ -98,4 +120,43 @@ export type StatisticsSummaryResponse = {
   sales_by_category: SalesByCategoryPoint[]
   top_cities_by_revenue: SalesByCityPoint[]
   top_city_by_orders: SalesByCityPoint | null
+}
+
+export type RelationshipCorrelationMetrics = {
+  value_delivery_correlation: number
+  delay_review_correlation: number
+  value_delivery_sample_size: number
+  delay_review_sample_size: number
+}
+
+export type RelationshipScatterPoint = {
+  order_value: number
+  delivery_time_days: number
+}
+
+export type RelationshipBoxplotGroup = {
+  group: string
+  count: number
+  min_value: number
+  q1_value: number
+  median_value: number
+  q3_value: number
+  max_value: number
+  mean_value: number
+}
+
+export type RelationshipStateBehaviorPoint = {
+  customer_state: string
+  orders: number
+  avg_order_value: number
+  avg_delivery_days: number
+  avg_review_score: number
+  late_delivery_percentage: number
+}
+
+export type RelationshipsAnalysisResponse = {
+  correlations: RelationshipCorrelationMetrics
+  scatter: RelationshipScatterPoint[]
+  review_score_by_delivery_status: RelationshipBoxplotGroup[]
+  top_states_behavior: RelationshipStateBehaviorPoint[]
 }

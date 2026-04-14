@@ -6,6 +6,9 @@ from app.config import RAW_DATA_DIR
 from schemas.dashboard import (
     DatasetDateRange,
     DeliveryHistogramBin,
+    DeliveryRiskAnalysis,
+    DeliveryRiskCdfPoint,
+    DeliveryRiskEventProbability,
     DeliveryTimeAnalysis,
     DescriptiveHistogramBin,
     HealthResponse,
@@ -16,14 +19,20 @@ from schemas.dashboard import (
     SalesByCityPoint,
     SalesByStatePoint,
     SalesMonthlyPoint,
+    RelationshipsAnalysisResponse,
+    RelationshipBoxplotGroup,
+    RelationshipCorrelationMetrics,
+    RelationshipScatterPoint,
+    RelationshipStateBehaviorPoint,
     StatisticsSummaryResponse,
     TicketRangeDistributionPoint,
 )
-from services.delivery import get_delivery_time_analysis
+from services.delivery import get_delivery_risk_analysis, get_delivery_time_analysis
 from services.descriptive import get_order_value_descriptive_stats
 from services.filters import DashboardFilters, get_dataset_date_range
 from services.orders import get_orders_by_status
 from services.overview import build_overview_metrics
+from services.relationships import get_relationships_analysis
 from services.sales import (
     get_sales_by_category,
     get_sales_by_city,
@@ -169,4 +178,41 @@ def statistics_descriptive_delivery_time(
         std_delivery_days=stats["std_delivery_days"],
         late_delivery_percentage=stats["late_delivery_percentage"],
         histogram=[DeliveryHistogramBin(**item) for item in stats["histogram"]],
+    )
+
+
+@router.get(
+    "/statistics/probability/delivery-risk",
+    response_model=DeliveryRiskAnalysis,
+)
+def statistics_probability_delivery_risk(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> DeliveryRiskAnalysis:
+    stats = get_delivery_risk_analysis(RAW_DATA_DIR, filters=filters)
+    return DeliveryRiskAnalysis(
+        probability_late_delivery=stats["probability_late_delivery"],
+        probability_delivery_up_to_7_days=stats["probability_delivery_up_to_7_days"],
+        probability_delivery_up_to_14_days=stats["probability_delivery_up_to_14_days"],
+        probability_delivery_over_30_days=stats["probability_delivery_over_30_days"],
+        total_delivered_orders=stats["total_delivered_orders"],
+        event_probabilities=[DeliveryRiskEventProbability(**item) for item in stats["event_probabilities"]],
+        cdf=[DeliveryRiskCdfPoint(**item) for item in stats["cdf"]],
+    )
+
+
+@router.get(
+    "/statistics/relationships",
+    response_model=RelationshipsAnalysisResponse,
+)
+def statistics_relationships(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+) -> RelationshipsAnalysisResponse:
+    stats = get_relationships_analysis(RAW_DATA_DIR, filters=filters)
+    return RelationshipsAnalysisResponse(
+        correlations=RelationshipCorrelationMetrics(**stats["correlations"]),
+        scatter=[RelationshipScatterPoint(**item) for item in stats["scatter"]],
+        review_score_by_delivery_status=[
+            RelationshipBoxplotGroup(**item) for item in stats["review_score_by_delivery_status"]
+        ],
+        top_states_behavior=[RelationshipStateBehaviorPoint(**item) for item in stats["top_states_behavior"]],
     )

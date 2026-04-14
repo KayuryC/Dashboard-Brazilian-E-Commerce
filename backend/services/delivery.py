@@ -32,6 +32,111 @@ def _safe_round(value: float) -> float:
     return round(float(value), 2)
 
 
+def _build_empty_delivery_risk_response() -> dict[str, object]:
+    return {
+        "probability_late_delivery": 0.0,
+        "probability_delivery_up_to_7_days": 0.0,
+        "probability_delivery_up_to_14_days": 0.0,
+        "probability_delivery_over_30_days": 0.0,
+        "total_delivered_orders": 0,
+        "event_probabilities": [],
+        "cdf": [],
+    }
+
+
+def get_delivery_risk_analysis(
+    data_dir: Path,
+    filters: DashboardFilters | None = None,
+    cdf_points: int = 24,
+) -> dict[str, object]:
+    dataframe = get_consolidated_dataset(data_dir)
+    dataframe = apply_dashboard_filters(dataframe, filters)
+
+    if dataframe.empty:
+        return _build_empty_delivery_risk_response()
+
+    order_level = dataframe.drop_duplicates(subset=["order_id"])
+    if "order_delivered_customer_date" not in order_level.columns:
+        return _build_empty_delivery_risk_response()
+
+    delivered_orders = order_level[order_level["order_delivered_customer_date"].notna()].copy()
+    if delivered_orders.empty:
+        return _build_empty_delivery_risk_response()
+
+    delivered_orders["delivery_time_days"] = pd.to_numeric(
+        delivered_orders.get("delivery_time_days"),
+        errors="coerce",
+    )
+    delivered_orders = delivered_orders.dropna(subset=["delivery_time_days"])
+    delivered_orders = delivered_orders[delivered_orders["delivery_time_days"] >= 0]
+
+    if delivered_orders.empty:
+        return _build_empty_delivery_risk_response()
+
+    if "is_late" in delivered_orders.columns:
+        late_series = delivered_orders["is_late"].fillna(False).astype(bool)
+    else:
+        late_series = pd.Series(False, index=delivered_orders.index)
+
+    total_delivered_orders = int(delivered_orders.shape[0])
+    delivery_days = delivered_orders["delivery_time_days"]
+
+    probability_late_delivery = _safe_round(late_series.mean() * 100)
+    probability_delivery_up_to_7_days = _safe_round((delivery_days <= 7).mean() * 100)
+    probability_delivery_up_to_14_days = _safe_round((delivery_days <= 14).mean() * 100)
+    probability_delivery_over_30_days = _safe_round((delivery_days > 30).mean() * 100)
+
+    event_probabilities = [
+        {
+            "event_key": "late_delivery",
+            "label": "Atraso",
+            "probability": probability_late_delivery,
+            "count": int(late_series.sum()),
+        },
+        {
+            "event_key": "delivery_up_to_7_days",
+            "label": "Entrega ate 7 dias",
+            "probability": probability_delivery_up_to_7_days,
+            "count": int((delivery_days <= 7).sum()),
+        },
+        {
+            "event_key": "delivery_up_to_14_days",
+            "label": "Entrega ate 14 dias",
+            "probability": probability_delivery_up_to_14_days,
+            "count": int((delivery_days <= 14).sum()),
+        },
+        {
+            "event_key": "delivery_over_30_days",
+            "label": "Entrega acima de 30 dias",
+            "probability": probability_delivery_over_30_days,
+            "count": int((delivery_days > 30).sum()),
+        },
+    ]
+
+    thresholds = np.linspace(
+        float(delivery_days.min()),
+        float(delivery_days.max()),
+        num=max(8, int(cdf_points)),
+    )
+    cdf = [
+        {
+            "days": _safe_round(float(threshold)),
+            "cumulative_probability": _safe_round(float((delivery_days <= threshold).mean() * 100)),
+        }
+        for threshold in thresholds
+    ]
+
+    return {
+        "probability_late_delivery": probability_late_delivery,
+        "probability_delivery_up_to_7_days": probability_delivery_up_to_7_days,
+        "probability_delivery_up_to_14_days": probability_delivery_up_to_14_days,
+        "probability_delivery_over_30_days": probability_delivery_over_30_days,
+        "total_delivered_orders": total_delivered_orders,
+        "event_probabilities": event_probabilities,
+        "cdf": cdf,
+    }
+
+
 def get_delivery_time_analysis(
     data_dir: Path,
     bins: int = 10,
