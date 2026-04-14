@@ -83,6 +83,15 @@ export type DeliveryTimeAnalysis = {
   std_delivery_days: number
   late_delivery_percentage: number
   histogram: DeliveryHistogramBin[]
+  monthly_trend: DeliveryMonthlyTrendPoint[]
+}
+
+export type DeliveryMonthlyTrendPoint = {
+  purchase_year_month: string
+  avg_delivery_days: number
+  avg_estimated_days: number
+  late_delivery_percentage: number
+  delivered_orders: number
 }
 
 export type DeliveryRiskEventProbability = {
@@ -159,4 +168,13 @@ export type RelationshipsAnalysisResponse = {
   scatter: RelationshipScatterPoint[]
   review_score_by_delivery_status: RelationshipBoxplotGroup[]
   top_states_behavior: RelationshipStateBehaviorPoint[]
+  correlation_matrix: RelationshipCorrelationHeatmapCell[]
+}
+
+export type RelationshipCorrelationHeatmapCell = {
+  x_key: string
+  y_key: string
+  x_label: string
+  y_label: string
+  correlation: number
 }

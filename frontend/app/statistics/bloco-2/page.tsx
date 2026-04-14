@@ -33,10 +33,10 @@ function ChartSkeleton({ height = 320 }: { height?: number }) {
   )
 }
 
-const DeliveryTimeDistributionChart = dynamic(
+const DeliveryTrendComparisonChart = dynamic(
   () =>
-    import("@/components/charts/delivery-time-distribution-chart").then(
-      (mod) => mod.DeliveryTimeDistributionChart,
+    import("@/components/charts/delivery-trend-comparison-chart").then(
+      (mod) => mod.DeliveryTrendComparisonChart,
     ),
   { loading: () => <ChartSkeleton height={340} /> },
 )
@@ -176,13 +176,16 @@ export default async function StatisticsDeliveryPage({
       ...item,
       share: totalDeliveredOrders ? (item.count / totalDeliveredOrders) * 100 : 0,
     }))
+  const monthlyTrendSeries = deliveryStats.monthly_trend.filter((item) =>
+    /^\d{4}-\d{2}$/.test(item.purchase_year_month),
+  )
 
   return (
     <main className="min-h-screen p-6 md:p-10">
-      <div className="mx-auto grid w-full max-w-[1560px] gap-8">
-        <section>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Estatística e Probabilidade</h1>
-          <p className="text-slate-600">Bloco 2 — Tempo de Entrega: análise de entrega</p>
+      <div className="stats-page-shell">
+        <section className="stats-page-header">
+          <h1 className="stats-page-title">Estatística e Probabilidade</h1>
+          <p className="stats-page-subtitle">Bloco 2 — Tempo de Entrega: análise de entrega</p>
         </section>
 
         <StatisticsGlobalFilters
@@ -200,44 +203,39 @@ export default async function StatisticsDeliveryPage({
           cityOptions={cityOptions}
         />
 
-        <section className="grid gap-6">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Análise de entrega</h2>
-            <p className="text-sm text-slate-600">Tempo médio real, estimado, variação e percentual de atraso</p>
-            <div className="mt-3 grid gap-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-              <p>
-                <span className="font-semibold text-slate-900">Analisando:</span>{" "}
-                {executiveContext.analysisLabel}
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">Periodo:</span>{" "}
-                {executiveContext.periodLabel}
-              </p>
+        <section className="stats-block-shell">
+          <div className="stats-block-header">
+            <h2 className="stats-block-title">Análise de entrega</h2>
+            <p className="stats-block-subtitle">Tempo médio real, estimado, variação e percentual de atraso</p>
+            <div className="stats-context-chip-row">
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Analisando:</span> {executiveContext.analysisLabel}
+              </span>
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Período:</span> {executiveContext.periodLabel}
+              </span>
               {selectedStateComparison ? (
                 <>
-                  <p>
-                    <span className="font-semibold text-slate-900">Participacao no total:</span>{" "}
-                    {toPercentage(selectedStateShare)} da receita nacional
-                  </p>
-                  <p>
-                    <span className="font-semibold text-slate-900">Posicao no ranking nacional:</span>{" "}
-                    {selectedStateRank}º de {executiveContext.rankingTotal}
-                  </p>
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Participação:</span> {toPercentage(selectedStateShare)}
+                  </span>
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Ranking:</span> {selectedStateRank}º de {executiveContext.rankingTotal}
+                  </span>
                 </>
               ) : (
-                <p>
-                  <span className="font-semibold text-slate-900">Participacao no total:</span> 100,0% da receita
-                  (visao Brasil)
-                </p>
+                <span className="stats-context-chip">
+                  <span className="stats-context-chip-label">Participação:</span> 100,0% (Brasil)
+                </span>
               )}
             </div>
           </div>
 
           {selectedFilters.state ? (
-            <Card>
+            <Card className="stats-panel-card">
               <CardHeader>
-                <CardTitle>Contexto comparativo do recorte</CardTitle>
-                <CardDescription>Entrega no recorte atual versus baseline Brasil (mesmo período)</CardDescription>
+                <CardTitle className="stats-chart-title">Contexto comparativo do recorte</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Entrega no recorte atual versus baseline Brasil (mesmo período)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-slate-700">
                 <p>
@@ -258,7 +256,7 @@ export default async function StatisticsDeliveryPage({
 
           <Card className="border-slate-900 bg-slate-900 text-white">
             <CardHeader>
-              <CardDescription className="text-slate-200">Headline do bloco</CardDescription>
+              <CardDescription className="text-[11px] uppercase tracking-wide text-slate-200">Headline do bloco</CardDescription>
               <CardTitle className="text-2xl">
                 Eficiência de entrega: {toSignedPercentage(deliveryEfficiencyPercentage)}
               </CardTitle>
@@ -271,48 +269,48 @@ export default async function StatisticsDeliveryPage({
           </Card>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Tempo médio de entrega</CardDescription>
-                <CardTitle>{toDays(deliveryStats.avg_delivery_days)}</CardTitle>
-                <CardDescription className="pt-1">
+                <CardDescription className="stats-kpi-label">Tempo médio de entrega</CardDescription>
+                <CardTitle className="stats-kpi-value">{toDays(deliveryStats.avg_delivery_days)}</CardTitle>
+                <CardDescription className="stats-kpi-helper pt-1">
                   vs prazo prometido: {toSignedPercentage(deliveryEfficiencyPercentage)}
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Prazo prometido médio</CardDescription>
-                <CardTitle>{toDays(deliveryStats.avg_estimated_days)}</CardTitle>
-                <CardDescription className="pt-1">
+                <CardDescription className="stats-kpi-label">Prazo prometido médio</CardDescription>
+                <CardTitle className="stats-kpi-value">{toDays(deliveryStats.avg_estimated_days)}</CardTitle>
+                <CardDescription className="stats-kpi-helper pt-1">
                   diferença real: {toSignedDays(scheduleGapDays)}
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Desvio padrão</CardDescription>
-                <CardTitle>{toDays(deliveryStats.std_delivery_days)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Desvio padrão</CardDescription>
+                <CardTitle className="stats-kpi-value">{toDays(deliveryStats.std_delivery_days)}</CardTitle>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Atraso (%)</CardDescription>
-                <CardTitle>{toPercentage(deliveryStats.late_delivery_percentage)}</CardTitle>
-                <CardDescription className="pt-1">
+                <CardDescription className="stats-kpi-label">Atraso (%)</CardDescription>
+                <CardTitle className="stats-kpi-value">{toPercentage(deliveryStats.late_delivery_percentage)}</CardTitle>
+                <CardDescription className="stats-kpi-helper pt-1">
                   entrega no prazo: {toPercentage(onTimePercentage)}
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Faixa de SLA dominante</CardDescription>
-                <CardTitle>{dominantSlaRange ? dominantSlaRange.label : "N/A"}</CardTitle>
-                <CardDescription className="pt-1">
+                <CardDescription className="stats-kpi-label">Faixa de SLA dominante</CardDescription>
+                <CardTitle className="stats-kpi-value">{dominantSlaRange ? dominantSlaRange.label : "N/A"}</CardTitle>
+                <CardDescription className="stats-kpi-helper pt-1">
                   participacao: {dominantSlaRange ? toPercentage(dominantSlaRange.share) : "0,0%"}
                 </CardDescription>
               </CardHeader>
@@ -320,10 +318,10 @@ export default async function StatisticsDeliveryPage({
           </div>
 
           <div className="grid gap-6 xl:grid-cols-10">
-            <Card className="xl:col-span-6">
+            <Card className="stats-panel-card xl:col-span-6">
               <CardHeader>
-                <CardTitle>Faixas de SLA de entrega</CardTitle>
-                <CardDescription>Percentual de pedidos por janela operacional</CardDescription>
+                <CardTitle className="stats-chart-title">Faixas de SLA de entrega</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Percentual de pedidos por janela operacional</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {slaRanges.map((range) => (
@@ -343,10 +341,10 @@ export default async function StatisticsDeliveryPage({
               </CardContent>
             </Card>
 
-            <Card className="xl:col-span-4">
+            <Card className="stats-panel-card xl:col-span-4">
               <CardHeader>
-                <CardTitle>Concentração operacional</CardTitle>
-                <CardDescription>Leitura rápida das faixas mais recorrentes</CardDescription>
+                <CardTitle className="stats-chart-title">Concentração operacional</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Leitura rápida das faixas mais recorrentes</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1 text-sm text-slate-700">
@@ -388,20 +386,22 @@ export default async function StatisticsDeliveryPage({
             </Card>
           </div>
 
-          <Card>
+          <Card className="stats-panel-card">
             <CardHeader>
-              <CardTitle>Visual de apoio — Histograma</CardTitle>
-              <CardDescription>Distribuição detalhada de dias por faixa técnica</CardDescription>
+              <CardTitle className="stats-chart-title">Evolução temporal de prazo real vs estimado</CardTitle>
+              <CardDescription className="stats-chart-subtitle">
+                Série mensal de tempo médio de entrega e prazo prometido
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <DeliveryTimeDistributionChart data={deliveryStats.histogram} />
+              <DeliveryTrendComparisonChart data={monthlyTrendSeries} />
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="stats-insight-shell">
             <CardHeader>
-              <CardTitle>Insight executivo</CardTitle>
-              <CardDescription>Síntese de desempenho logístico no recorte selecionado</CardDescription>
+              <CardTitle className="stats-chart-title">Insight executivo</CardTitle>
+              <CardDescription className="stats-chart-subtitle">Síntese de desempenho logístico no recorte selecionado</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-slate-700">
               <p>

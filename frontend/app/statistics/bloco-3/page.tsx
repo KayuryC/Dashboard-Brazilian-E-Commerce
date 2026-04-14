@@ -79,6 +79,11 @@ const ReviewScoreBoxplotGroups = dynamic(
   { loading: () => <ChartSkeleton height={320} /> },
 )
 
+const CorrelationHeatmap = dynamic(
+  () => import("@/components/charts/correlation-heatmap").then((mod) => mod.CorrelationHeatmap),
+  { loading: () => <ChartSkeleton height={320} /> },
+)
+
 export default async function StatisticsRelationshipsPage({
   searchParams,
 }: StatisticsRelationshipsPageProps) {
@@ -130,8 +135,6 @@ export default async function StatisticsRelationshipsPage({
   const reviewGap = (onTimeGroup?.mean_value ?? 0) - (lateGroup?.mean_value ?? 0)
 
   const topStateBehavior = relationships.top_states_behavior[0]
-  const topStatesLight = relationships.top_states_behavior.slice(0, 5)
-  const maxStateOrders = Math.max(...topStatesLight.map((item) => item.orders), 1)
 
   const valueDeliveryCorrelationAbs = Math.abs(valueDeliveryCorrelation)
   const delayReviewCorrelationAbs = Math.abs(delayReviewCorrelation)
@@ -155,10 +158,10 @@ export default async function StatisticsRelationshipsPage({
 
   return (
     <main className="min-h-screen p-6 md:p-10">
-      <div className="mx-auto grid w-full max-w-[1560px] gap-8">
-        <section>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Estatistica e Probabilidade</h1>
-          <p className="text-slate-600">Bloco 3 — Relacao entre variaveis</p>
+      <div className="stats-page-shell">
+        <section className="stats-page-header">
+          <h1 className="stats-page-title">Estatística e Probabilidade</h1>
+          <p className="stats-page-subtitle">Bloco 3 — Relação entre variáveis</p>
         </section>
 
         <StatisticsGlobalFilters
@@ -176,43 +179,47 @@ export default async function StatisticsRelationshipsPage({
           cityOptions={cityOptions}
         />
 
-        <section className="grid gap-6">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Como as variaveis se influenciam</h2>
-            <p className="text-sm text-slate-600">
-              Relacao entre valor, tempo de entrega, atraso e avaliacao do cliente
+        <section className="stats-block-shell">
+          <div className="stats-block-header">
+            <h2 className="stats-block-title">Como as variáveis se influenciam</h2>
+            <p className="stats-block-subtitle">
+              Relação entre valor, tempo de entrega, atraso e avaliação do cliente
             </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                <span className="font-semibold text-slate-900">Analisando:</span> {executiveContext.analysisLabel}
+            <div className="stats-context-chip-row">
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Analisando:</span> {executiveContext.analysisLabel}
               </span>
-              <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                <span className="font-semibold text-slate-900">Periodo:</span> {executiveContext.periodLabel}
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Período:</span> {executiveContext.periodLabel}
               </span>
               {selectedStateComparison ? (
                 <>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                    <span className="font-semibold text-slate-900">Participacao:</span>{" "}
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Participação:</span>{" "}
                     {selectedStateShare.toLocaleString("pt-BR", {
                       minimumFractionDigits: 1,
                       maximumFractionDigits: 1,
                     })}
                     %
                   </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                    <span className="font-semibold text-slate-900">Ranking:</span> {selectedStateRank}º de{" "}
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Ranking:</span> {selectedStateRank}º de{" "}
                     {executiveContext.rankingTotal}
                   </span>
                 </>
-              ) : null}
+              ) : (
+                <span className="stats-context-chip">
+                  <span className="stats-context-chip-label">Participação:</span> 100,0% (Brasil)
+                </span>
+              )}
             </div>
           </div>
 
           <div className="grid gap-6 xl:grid-cols-12">
-            <Card className="xl:col-span-8">
+            <Card className="stats-panel-card xl:col-span-8">
               <CardHeader>
-                <CardTitle>Scatter plot — Valor do pedido x Tempo de entrega</CardTitle>
-                <CardDescription>
+                <CardTitle className="stats-chart-title">Scatter plot — Valor do pedido x Tempo de entrega</CardTitle>
+                <CardDescription className="stats-chart-subtitle">
                   Visual principal do bloco · X: valor do pedido · Y: tempo de entrega (dias)
                 </CardDescription>
               </CardHeader>
@@ -221,10 +228,10 @@ export default async function StatisticsRelationshipsPage({
               </CardContent>
             </Card>
 
-            <Card className="xl:col-span-4">
+            <Card className="stats-panel-card xl:col-span-4">
               <CardHeader>
-                <CardTitle>Leitura de correlacao</CardTitle>
-                <CardDescription>KPIs conectados ao scatter principal</CardDescription>
+                <CardTitle className="stats-chart-title">Leitura de correlacao</CardTitle>
+                <CardDescription className="stats-chart-subtitle">KPIs conectados ao scatter principal</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
@@ -257,50 +264,36 @@ export default async function StatisticsRelationshipsPage({
           </div>
 
           <div className="grid gap-6 xl:grid-cols-12">
-            <Card className="xl:col-span-7">
+            <Card className="stats-panel-card xl:col-span-7">
               <CardHeader>
-                <CardTitle>Boxplot por grupo de atraso</CardTitle>
-                <CardDescription>Visual de apoio · Distribuicao de nota em pedidos no prazo vs atrasado</CardDescription>
+                <CardTitle className="stats-chart-title">Boxplot por grupo de atraso</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Visual de apoio · Distribuicao de nota em pedidos no prazo vs atrasado</CardDescription>
               </CardHeader>
               <CardContent>
                 <ReviewScoreBoxplotGroups data={relationships.review_score_by_delivery_status} />
               </CardContent>
             </Card>
 
-            <Card className="xl:col-span-5">
+            <Card className="stats-panel-card xl:col-span-5">
               <CardHeader>
-                <CardTitle>Resumo regional rapido</CardTitle>
-                <CardDescription>Top estados por volume com indicadores-chave</CardDescription>
+                <CardTitle className="stats-chart-title">Heatmap de correlação</CardTitle>
+                <CardDescription className="stats-chart-subtitle">
+                  Intensidade e direção das relações entre variáveis do recorte
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {topStatesLight.map((item) => {
-                  const width = Math.max(6, (item.orders / maxStateOrders) * 100)
-
-                  return (
-                    <div key={item.customer_state} className="rounded-lg border border-slate-200 bg-white p-3">
-                      <div className="mb-1 flex items-center justify-between">
-                        <p className="text-sm font-semibold text-slate-900">{item.customer_state}</p>
-                        <p className="text-xs text-slate-600">{item.orders.toLocaleString("pt-BR")} pedidos</p>
-                      </div>
-                      <div className="mb-2 h-2 rounded-full bg-slate-100">
-                        <div className="h-full rounded-full bg-slate-800" style={{ width: `${Math.min(100, width)}%` }} />
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-[11px] text-slate-600">
-                        <p>Ticket: <span className="font-medium text-slate-900">{toCurrency(item.avg_order_value)}</span></p>
-                        <p>Entrega: <span className="font-medium text-slate-900">{toDays(item.avg_delivery_days)}</span></p>
-                        <p>Atraso: <span className="font-medium text-slate-900">{item.late_delivery_percentage.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</span></p>
-                      </div>
-                    </div>
-                  )
-                })}
+                <CorrelationHeatmap data={relationships.correlation_matrix} />
+                <p className="text-xs text-slate-500">
+                  Azul indica correlação positiva e vermelho indica correlação negativa.
+                </p>
               </CardContent>
             </Card>
           </div>
 
-          <Card>
+          <Card className="stats-insight-shell">
             <CardHeader>
-              <CardTitle>Insight executivo</CardTitle>
-              <CardDescription>Leitura de negocio para tomada de decisao</CardDescription>
+              <CardTitle className="stats-chart-title">Insight executivo</CardTitle>
+              <CardDescription className="stats-chart-subtitle">Leitura de negocio para tomada de decisao</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-slate-700">
               <p>

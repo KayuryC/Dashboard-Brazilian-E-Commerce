@@ -202,10 +202,10 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
 
   return (
     <main className="min-h-screen p-6 md:p-10">
-      <div className="mx-auto grid w-full max-w-[1560px] gap-8">
-        <section>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Estatística e Probabilidade</h1>
-          <p className="text-slate-600">
+      <div className="stats-page-shell">
+        <section className="stats-page-header">
+          <h1 className="stats-page-title">Estatística e Probabilidade</h1>
+          <p className="stats-page-subtitle">
             Análise exploratória dos dados do e-commerce com KPIs, distribuição operacional e leitura regional
           </p>
         </section>
@@ -225,47 +225,46 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
           cityOptions={cityOptions}
         />
 
-        <section className="grid gap-6">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Resumo Executivo + Destaques</h2>
-            <p className="text-sm text-slate-600">Quem lidera, onde está concentrado e o que domina a operação</p>
-            <div className="mt-3 grid gap-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-              <p>
-                <span className="font-semibold text-slate-900">Analisando:</span>{" "}
+        <section className="stats-block-shell">
+          <div className="stats-block-header">
+            <h2 className="stats-block-title">Resumo Executivo + Destaques</h2>
+            <p className="stats-block-subtitle">Quem lidera, onde está concentrado e o que domina a operação</p>
+            <div className="stats-context-chip-row">
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Analisando:</span>{" "}
                 {executiveContext.analysisLabel}
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">Periodo:</span>{" "}
+              </span>
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Período:</span>{" "}
                 {executiveContext.periodLabel}
-              </p>
+              </span>
               {selectedStateComparison ? (
                 <>
-                  <p>
-                    <span className="font-semibold text-slate-900">Participacao no total:</span>{" "}
-                    {toPercentage(selectedStateShare)} da receita nacional
-                  </p>
-                  <p>
-                    <span className="font-semibold text-slate-900">Posicao no ranking nacional:</span>{" "}
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Participação:</span>{" "}
+                    {toPercentage(selectedStateShare)}
+                  </span>
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Ranking:</span>{" "}
                     {selectedStateRank}º de {executiveContext.rankingTotal}
-                  </p>
+                  </span>
                 </>
               ) : (
-                <p>
-                  <span className="font-semibold text-slate-900">Participacao no total:</span> 100,0% da receita
-                  (visao Brasil)
-                </p>
+                <span className="stats-context-chip">
+                  <span className="stats-context-chip-label">Participação:</span> 100,0% (Brasil)
+                </span>
               )}
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader className="pb-2">
-                <CardDescription>Pedidos</CardDescription>
-                <CardTitle>{metrics.total_orders.toLocaleString("pt-BR")}</CardTitle>
+                <CardDescription className="stats-kpi-label">Pedidos</CardDescription>
+                <CardTitle className="stats-kpi-value">{metrics.total_orders.toLocaleString("pt-BR")}</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-3">
-                <p className="text-sm text-slate-600">
+                <p className="stats-kpi-helper">
                   Volume alto concentrado em{" "}
                   <span className="font-medium text-slate-800">{dominantStatus?.label ?? "status líder"}</span>{" "}
                   ({toPercentage(dominantStatusShare)}).
@@ -274,13 +273,13 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader className="pb-2">
-                <CardDescription>Receita</CardDescription>
-                <CardTitle>{toCurrency(metrics.total_revenue)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Receita</CardDescription>
+                <CardTitle className="stats-kpi-value">{toCurrency(metrics.total_revenue)}</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-3">
-                <p className="text-sm text-slate-600">
+                <p className="stats-kpi-helper">
                   Crescimento de{" "}
                   <span className={`font-medium ${growthHighlightClass}`}>{toSignedPercentage(revenueGrowthPercentage)}</span>{" "}
                   do início ao fim da série mensal.
@@ -289,39 +288,39 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader className="pb-2">
-                <CardDescription>Ticket médio</CardDescription>
-                <CardTitle>{toCurrency(metrics.average_ticket)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Ticket médio</CardDescription>
+                <CardTitle className="stats-kpi-value">{toCurrency(metrics.average_ticket)}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-slate-600">
+                <p className="stats-kpi-helper">
                   Indicador de estabilidade de monetização por pedido ao longo do período.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader className="pb-2">
-                <CardDescription>Atraso</CardDescription>
-                <CardTitle>{toPercentage(metrics.late_delivery_percentage)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Atraso</CardDescription>
+                <CardTitle className="stats-kpi-value">{toPercentage(metrics.late_delivery_percentage)}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-slate-600">
+                <p className="stats-kpi-helper">
                   Impacto operacional direto na experiência logística e no nível de serviço.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader className="pb-2">
-                <CardDescription>Nota média</CardDescription>
-                <CardTitle>
+                <CardDescription className="stats-kpi-label">Nota média</CardDescription>
+                <CardTitle className="stats-kpi-value">
                   {metrics.average_review_score.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-slate-600">
+                <p className="stats-kpi-helper">
                   Sinal consolidado de percepção do cliente, com {reviewSatisfactionLabel}.
                 </p>
               </CardContent>
@@ -329,33 +328,35 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Receita total</CardDescription>
-                <CardTitle>{toCurrency(metrics.total_revenue)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Receita total</CardDescription>
+                <CardTitle className="stats-kpi-value">{toCurrency(metrics.total_revenue)}</CardTitle>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Receita média mensal</CardDescription>
-                <CardTitle>{toCurrency(averageMonthlyRevenue)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Receita média mensal</CardDescription>
+                <CardTitle className="stats-kpi-value">{toCurrency(averageMonthlyRevenue)}</CardTitle>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Crescimento (%)</CardDescription>
-                <CardTitle className={growthHighlightClass}>{toSignedPercentage(revenueGrowthPercentage)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Crescimento (%)</CardDescription>
+                <CardTitle className={`stats-kpi-value ${growthHighlightClass}`}>
+                  {toSignedPercentage(revenueGrowthPercentage)}
+                </CardTitle>
               </CardHeader>
             </Card>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            <Card>
+            <Card className="stats-panel-card">
               <CardHeader>
-                <CardTitle>Cidade líder</CardTitle>
-                <CardDescription>KPI + contexto</CardDescription>
+                <CardTitle className="stats-chart-title">Cidade líder</CardTitle>
+                <CardDescription className="stats-chart-subtitle">KPI + contexto</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-lg font-semibold text-slate-900">
@@ -377,10 +378,10 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="stats-panel-card">
               <CardHeader>
-                <CardTitle>Categoria líder</CardTitle>
-                <CardDescription>Produto/categoria mais vendida</CardDescription>
+                <CardTitle className="stats-chart-title">Categoria líder</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Produto/categoria mais vendida</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-lg font-semibold text-slate-900">
@@ -394,10 +395,10 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="stats-panel-card">
               <CardHeader>
-                <CardTitle>Status dominante</CardTitle>
-                <CardDescription>Composição operacional</CardDescription>
+                <CardTitle className="stats-chart-title">Status dominante</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Composição operacional</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <p className="text-lg font-semibold text-slate-900">{dominantStatus?.label ?? "Sem dados"}</p>
@@ -411,10 +412,12 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
           </div>
 
           {selectedFilters.state && selectedStateComparison ? (
-            <Card>
+            <Card className="stats-panel-card">
               <CardHeader>
-                <CardTitle>Comparativo de {selectedFilters.state}</CardTitle>
-                <CardDescription>Posicionamento do estado filtrado em relação ao Brasil e a media nacional</CardDescription>
+                <CardTitle className="stats-chart-title">Comparativo de {selectedFilters.state}</CardTitle>
+                <CardDescription className="stats-chart-subtitle">
+                  Posicionamento do estado filtrado em relação ao Brasil e à média nacional
+                </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-2 md:grid-cols-3">
                 <p className="text-sm text-slate-700">
@@ -438,10 +441,10 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
           ) : null}
 
           <div className="grid gap-6 2xl:grid-cols-5">
-            <Card className="2xl:col-span-3">
+            <Card className="stats-panel-card 2xl:col-span-3">
               <CardHeader>
-                <CardTitle>Top 10 categorias por receita</CardTitle>
-                <CardDescription>Ranking horizontal enterprise</CardDescription>
+                <CardTitle className="stats-chart-title">Top 10 categorias por receita</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Ranking horizontal enterprise</CardDescription>
               </CardHeader>
               <CardContent>
                 <RankingHorizontalBar
@@ -453,10 +456,12 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
               </CardContent>
             </Card>
 
-            <Card className="2xl:col-span-2">
+            <Card className="stats-panel-card 2xl:col-span-2">
               <CardHeader>
-                <CardTitle>Top 10 cidades por receita</CardTitle>
-                <CardDescription>Ranking visível de concentração regional</CardDescription>
+                <CardTitle className="stats-chart-title">Top 10 cidades por receita</CardTitle>
+                <CardDescription className="stats-chart-subtitle">
+                  Ranking visível de concentração regional
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <RankingHorizontalBar
@@ -470,10 +475,10 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
           </div>
 
           <div className="grid gap-6 lg:grid-cols-5">
-            <Card className="lg:col-span-3">
+            <Card className="stats-panel-card lg:col-span-3">
               <CardHeader>
-                <CardTitle>Pareto de categorias</CardTitle>
-                <CardDescription>
+                <CardTitle className="stats-chart-title">Pareto de categorias</CardTitle>
+                <CardDescription className="stats-chart-subtitle">
                   Top 20% das categorias concentram {toPercentage(paretoTopShare)} da receita acumulada
                 </CardDescription>
               </CardHeader>
@@ -482,10 +487,12 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2">
+            <Card className="stats-panel-card lg:col-span-2">
               <CardHeader>
-                <CardTitle>Estados líderes</CardTitle>
-                <CardDescription>Top 10 horizontal + mini ranking Top 3</CardDescription>
+                <CardTitle className="stats-chart-title">Estados líderes</CardTitle>
+                <CardDescription className="stats-chart-subtitle">
+                  Top 10 horizontal + mini ranking Top 3
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <RankingHorizontalBar
@@ -518,20 +525,20 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
           </div>
 
           <div className="grid gap-6 lg:grid-cols-5">
-            <Card className="lg:col-span-3">
+            <Card className="stats-panel-card lg:col-span-3">
               <CardHeader>
-                <CardTitle>Distribuição de pedidos por status</CardTitle>
-                <CardDescription>Composição do funil operacional</CardDescription>
+                <CardTitle className="stats-chart-title">Distribuição de pedidos por status</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Composição do funil operacional</CardDescription>
               </CardHeader>
               <CardContent>
                 <OrdersByStatusChart data={ordersChartData} />
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2">
+            <Card className="stats-panel-card lg:col-span-2">
               <CardHeader>
-                <CardTitle>Composição operacional dos pedidos</CardTitle>
-                <CardDescription>Distribuição de pedidos por status</CardDescription>
+                <CardTitle className="stats-chart-title">Composição operacional dos pedidos</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Distribuição de pedidos por status</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {ordersByStatus.map((item) => (
@@ -549,20 +556,22 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
             </Card>
           </div>
 
-          <Card>
+          <Card className="stats-panel-card">
             <CardHeader>
-              <CardTitle>Receita por mês</CardTitle>
-              <CardDescription>Evolução temporal do faturamento</CardDescription>
+              <CardTitle className="stats-chart-title">Receita por mês</CardTitle>
+              <CardDescription className="stats-chart-subtitle">Evolução temporal do faturamento</CardDescription>
             </CardHeader>
             <CardContent>
               <SalesMonthlyChart data={salesMonthly} />
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="stats-panel-card">
             <CardHeader>
-              <CardTitle>Receita por estado</CardTitle>
-              <CardDescription>Mapa coroplético e leitura regional comparativa</CardDescription>
+              <CardTitle className="stats-chart-title">Receita por estado</CardTitle>
+              <CardDescription className="stats-chart-subtitle">
+                Mapa coroplético e leitura regional comparativa
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <SalesByStateMapDynamic

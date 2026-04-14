@@ -55,6 +55,11 @@ const DeliveryRiskProbabilityBars = dynamic(
   { loading: () => <ChartSkeleton height={360} /> },
 )
 
+const DeliveryRiskCdfChart = dynamic(
+  () => import("@/components/charts/delivery-risk-cdf-chart").then((mod) => mod.DeliveryRiskCdfChart),
+  { loading: () => <ChartSkeleton height={320} /> },
+)
+
 export default async function StatisticsProbabilityPage({
   searchParams,
 }: StatisticsProbabilityPageProps) {
@@ -140,10 +145,10 @@ export default async function StatisticsProbabilityPage({
 
   return (
     <main className="min-h-screen p-6 md:p-10">
-      <div className="mx-auto grid w-full max-w-[1560px] gap-8">
-        <section>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Estatistica e Probabilidade</h1>
-          <p className="text-slate-600">Bloco 4 — Probabilidade e risco operacional</p>
+      <div className="stats-page-shell">
+        <section className="stats-page-header">
+          <h1 className="stats-page-title">Estatística e Probabilidade</h1>
+          <p className="stats-page-subtitle">Bloco 4 — Probabilidade e risco operacional</p>
         </section>
 
         <StatisticsGlobalFilters
@@ -161,66 +166,70 @@ export default async function StatisticsProbabilityPage({
           cityOptions={cityOptions}
         />
 
-        <section className="grid gap-6">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Probabilidade de eventos de entrega</h2>
-            <p className="text-sm text-slate-600">
-              Leitura de risco operacional com comparativo contra referencia nacional
+        <section className="stats-block-shell">
+          <div className="stats-block-header">
+            <h2 className="stats-block-title">Probabilidade de eventos de entrega</h2>
+            <p className="stats-block-subtitle">
+              Leitura de risco operacional com comparativo contra referência nacional
             </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                <span className="font-semibold text-slate-900">Analisando:</span> {executiveContext.analysisLabel}
+            <div className="stats-context-chip-row">
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Analisando:</span> {executiveContext.analysisLabel}
               </span>
-              <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                <span className="font-semibold text-slate-900">Periodo:</span> {executiveContext.periodLabel}
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Período:</span> {executiveContext.periodLabel}
               </span>
               {selectedStateComparison ? (
                 <>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                    <span className="font-semibold text-slate-900">Participacao:</span>{" "}
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Participação:</span>{" "}
                     {toPercentage(selectedStateShare)}
                   </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                    <span className="font-semibold text-slate-900">Ranking:</span> {selectedStateRank}º de{" "}
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Ranking:</span> {selectedStateRank}º de{" "}
                     {executiveContext.rankingTotal}
                   </span>
                 </>
-              ) : null}
+              ) : (
+                <span className="stats-context-chip">
+                  <span className="stats-context-chip-label">Participação:</span> 100,0% (Brasil)
+                </span>
+              )}
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Probabilidade de atraso</CardDescription>
-                <CardTitle>{toPercentage(lateProbability)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Probabilidade de atraso</CardDescription>
+                <CardTitle className="stats-kpi-value">{toPercentage(lateProbability)}</CardTitle>
               </CardHeader>
             </Card>
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Entrega ate 7 dias</CardDescription>
-                <CardTitle>{toPercentage(upTo7Probability)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Entrega ate 7 dias</CardDescription>
+                <CardTitle className="stats-kpi-value">{toPercentage(upTo7Probability)}</CardTitle>
               </CardHeader>
             </Card>
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Entrega ate 14 dias</CardDescription>
-                <CardTitle>{toPercentage(upTo14Probability)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Entrega ate 14 dias</CardDescription>
+                <CardTitle className="stats-kpi-value">{toPercentage(upTo14Probability)}</CardTitle>
               </CardHeader>
             </Card>
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Entrega acima de 30 dias</CardDescription>
-                <CardTitle>{toPercentage(over30Probability)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Entrega acima de 30 dias</CardDescription>
+                <CardTitle className="stats-kpi-value">{toPercentage(over30Probability)}</CardTitle>
               </CardHeader>
             </Card>
           </div>
 
           <div className="grid gap-6 xl:grid-cols-12">
-            <Card className="xl:col-span-8">
+            <Card className="stats-panel-card xl:col-span-8">
               <CardHeader>
-                <CardTitle>Eventos de risco por probabilidade</CardTitle>
-                <CardDescription>
+                <CardTitle className="stats-chart-title">Eventos de risco por probabilidade</CardTitle>
+                <CardDescription className="stats-chart-subtitle">
                   Visual principal · Quanto maior o valor, maior a chance do evento no recorte atual
                 </CardDescription>
               </CardHeader>
@@ -229,10 +238,10 @@ export default async function StatisticsProbabilityPage({
               </CardContent>
             </Card>
 
-            <Card className="xl:col-span-4">
+            <Card className="stats-panel-card xl:col-span-4">
               <CardHeader>
-                <CardTitle>Comparacao com Brasil</CardTitle>
-                <CardDescription>Mesmo periodo selecionado</CardDescription>
+                <CardTitle className="stats-chart-title">Comparacao com Brasil</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Mesmo periodo selecionado</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {comparisonRows.map((row) => (
@@ -256,10 +265,22 @@ export default async function StatisticsProbabilityPage({
             </Card>
           </div>
 
-          <Card>
+          <Card className="stats-panel-card">
             <CardHeader>
-              <CardTitle>Insight executivo</CardTitle>
-              <CardDescription>Leitura de estabilidade e risco operacional</CardDescription>
+              <CardTitle className="stats-chart-title">Evolução acumulada do risco de entrega (CDF)</CardTitle>
+              <CardDescription className="stats-chart-subtitle">
+                Probabilidade acumulada de entrega conforme o número de dias avança
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DeliveryRiskCdfChart data={riskStats.cdf} />
+            </CardContent>
+          </Card>
+
+          <Card className="stats-insight-shell">
+            <CardHeader>
+              <CardTitle className="stats-chart-title">Insight executivo</CardTitle>
+              <CardDescription className="stats-chart-subtitle">Leitura de estabilidade e risco operacional</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-slate-700">
               <p>

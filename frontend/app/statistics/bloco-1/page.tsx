@@ -38,6 +38,11 @@ const OrderValueBoxplot = dynamic(
   { loading: () => <ChartSkeleton height={240} /> },
 )
 
+const TicketRangeParetoChart = dynamic(
+  () => import("@/components/charts/ticket-range-pareto-chart").then((mod) => mod.TicketRangeParetoChart),
+  { loading: () => <ChartSkeleton height={320} /> },
+)
+
 function toPercentage(value: number) {
   return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
 }
@@ -131,10 +136,10 @@ export default async function StatisticsDescriptivePage({
 
   return (
     <main className="min-h-screen p-6 md:p-10">
-      <div className="mx-auto grid w-full max-w-[1560px] gap-8">
-        <section>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Estatística e Probabilidade</h1>
-          <p className="text-slate-600">
+      <div className="stats-page-shell">
+        <section className="stats-page-header">
+          <h1 className="stats-page-title">Estatística e Probabilidade</h1>
+          <p className="stats-page-subtitle">
             Bloco 1 — Estatística Descritiva: distribuição de valores de pedidos
           </p>
         </section>
@@ -154,79 +159,79 @@ export default async function StatisticsDescriptivePage({
           cityOptions={cityOptions}
         />
 
-        <section className="grid gap-6">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Distribuição de valores de pedidos</h2>
-            <p className="text-sm text-slate-600">
+        <section className="stats-block-shell">
+          <div className="stats-block-header">
+            <h2 className="stats-block-title">Distribuição de valores de pedidos</h2>
+            <p className="stats-block-subtitle">
               Medidas descritivas para leitura de concentração, dispersão e extremos
             </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                <span className="font-semibold text-slate-900">Analisando:</span> {executiveContext.analysisLabel}
+            <div className="stats-context-chip-row">
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Analisando:</span> {executiveContext.analysisLabel}
               </span>
-              <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                <span className="font-semibold text-slate-900">Periodo:</span> {executiveContext.periodLabel}
+              <span className="stats-context-chip">
+                <span className="stats-context-chip-label">Período:</span> {executiveContext.periodLabel}
               </span>
               {selectedStateComparison ? (
                 <>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                    <span className="font-semibold text-slate-900">Participacao:</span> {toPercentage(selectedStateShare)}
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Participação:</span> {toPercentage(selectedStateShare)}
                   </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                    <span className="font-semibold text-slate-900">Ranking:</span> {selectedStateRank}º de{" "}
+                  <span className="stats-context-chip">
+                    <span className="stats-context-chip-label">Ranking:</span> {selectedStateRank}º de{" "}
                     {executiveContext.rankingTotal}
                   </span>
                 </>
               ) : (
-                <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
-                  <span className="font-semibold text-slate-900">Participacao:</span> 100,0%
+                <span className="stats-context-chip">
+                  <span className="stats-context-chip-label">Participação:</span> 100,0%
                 </span>
               )}
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Média</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.mean_value)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Média</CardDescription>
+                <CardTitle className="stats-kpi-value">{toCurrency(orderValueStats.mean_value)}</CardTitle>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Mediana</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.median_value)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Mediana</CardDescription>
+                <CardTitle className="stats-kpi-value">{toCurrency(orderValueStats.median_value)}</CardTitle>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Q1 (1º quartil)</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.q1_value)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Q1 (1º quartil)</CardDescription>
+                <CardTitle className="stats-kpi-value">{toCurrency(orderValueStats.q1_value)}</CardTitle>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>Q3 (3º quartil)</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.q3_value)}</CardTitle>
+                <CardDescription className="stats-kpi-label">Q3 (3º quartil)</CardDescription>
+                <CardTitle className="stats-kpi-value">{toCurrency(orderValueStats.q3_value)}</CardTitle>
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="stats-kpi-card">
               <CardHeader>
-                <CardDescription>IQR (Q3 - Q1)</CardDescription>
-                <CardTitle>{toCurrency(orderValueStats.iqr_value)}</CardTitle>
+                <CardDescription className="stats-kpi-label">IQR (Q3 - Q1)</CardDescription>
+                <CardTitle className="stats-kpi-value">{toCurrency(orderValueStats.iqr_value)}</CardTitle>
               </CardHeader>
             </Card>
           </div>
 
           <div className="grid gap-6 xl:grid-cols-10">
-            <Card className="xl:col-span-7">
+            <Card className="stats-panel-card xl:col-span-7">
               <CardHeader>
-                <CardTitle>Visual principal — Boxplot</CardTitle>
-                <CardDescription>Leitura da dispersão entre mínimo, quartis, mediana e máximo</CardDescription>
+                <CardTitle className="stats-chart-title">Visual principal — Boxplot</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Leitura da dispersão entre mínimo, quartis, mediana e máximo</CardDescription>
               </CardHeader>
               <CardContent>
                 <OrderValueBoxplot
@@ -239,10 +244,10 @@ export default async function StatisticsDescriptivePage({
               </CardContent>
             </Card>
 
-            <Card className="xl:col-span-3">
+            <Card className="stats-panel-card xl:col-span-3">
               <CardHeader>
-                <CardTitle>Faixa típica</CardTitle>
-                <CardDescription>Intervalo central de valor dos pedidos</CardDescription>
+                <CardTitle className="stats-chart-title">Faixa típica</CardTitle>
+                <CardDescription className="stats-chart-subtitle">Intervalo central de valor dos pedidos</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-slate-700">
                 <p>
@@ -265,20 +270,36 @@ export default async function StatisticsDescriptivePage({
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribuição por faixa de ticket</CardTitle>
-              <CardDescription>Comparativo de participação de pedidos e receita em cada faixa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TicketRangeDistribution data={ticketDistribution} />
-            </CardContent>
-          </Card>
+          <div className="grid gap-6 xl:grid-cols-12">
+            <Card className="stats-panel-card xl:col-span-8">
+              <CardHeader>
+                <CardTitle className="stats-chart-title">Distribuição por faixa de ticket</CardTitle>
+                <CardDescription className="stats-chart-subtitle">
+                  Comparativo de participação de pedidos e receita em cada faixa
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TicketRangeDistribution data={ticketDistribution} />
+              </CardContent>
+            </Card>
 
-          <Card>
+            <Card className="stats-panel-card xl:col-span-4">
+              <CardHeader>
+                <CardTitle className="stats-chart-title">Pareto por faixa de ticket</CardTitle>
+                <CardDescription className="stats-chart-subtitle">
+                  Concentração da receita acumulada por ordem de relevância
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TicketRangeParetoChart data={ticketDistribution} />
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="stats-insight-shell">
             <CardHeader>
-              <CardTitle>Insight executivo</CardTitle>
-              <CardDescription>Síntese orientada ao impacto no negócio</CardDescription>
+              <CardTitle className="stats-chart-title">Insight executivo</CardTitle>
+              <CardDescription className="stats-chart-subtitle">Síntese orientada ao impacto no negócio</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 text-sm text-slate-700">
               <p>{executiveInsight}</p>
