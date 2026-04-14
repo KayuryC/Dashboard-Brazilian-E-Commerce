@@ -10,6 +10,10 @@ type StatisticsGlobalFiltersProps = {
     startDate: string
     endDate: string
   }
+  dateBounds: {
+    minDate?: string
+    maxDate?: string
+  }
   stateOptions: string[]
   cityOptions: string[]
 }
@@ -21,8 +25,20 @@ type FilterDraft = {
   endDate: string
 }
 
+function formatMonthYear(dateValue?: string): string {
+  if (!dateValue) return ""
+  const parsed = new Date(`${dateValue}T00:00:00`)
+  if (Number.isNaN(parsed.getTime())) return dateValue
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    month: "short",
+    year: "numeric",
+  }).format(parsed)
+}
+
 export function StatisticsGlobalFilters({
   currentFilters,
+  dateBounds,
   stateOptions,
   cityOptions,
 }: StatisticsGlobalFiltersProps) {
@@ -33,23 +49,91 @@ export function StatisticsGlobalFilters({
 
   const [draft, setDraft] = useState<FilterDraft>(currentFilters)
 
+  const minDate = dateBounds.minDate || ""
+  const maxDate = dateBounds.maxDate || ""
+
+  const minDateString = (a?: string, b?: string): string | undefined => {
+    if (a && b) return a < b ? a : b
+    return a || b
+  }
+
+  const maxDateString = (a?: string, b?: string): string | undefined => {
+    if (a && b) return a > b ? a : b
+    return a || b
+  }
+
+  const clampDate = (value: string): string => {
+    if (!value) return ""
+    if (!minDate || !maxDate) return value
+    if (value < minDate) return minDate
+    if (value > maxDate) return maxDate
+    return value
+  }
+
+  const sanitizeFilters = (filters: FilterDraft): FilterDraft => {
+    const clampedStartDate = clampDate(filters.startDate)
+    const clampedEndDate = clampDate(filters.endDate)
+    const startDate = clampedStartDate || minDate
+    const endDate = clampedEndDate || maxDate
+
+    if (startDate && endDate && startDate > endDate) {
+      return {
+        ...filters,
+        startDate,
+        endDate: startDate,
+      }
+    }
+
+    return {
+      ...filters,
+      startDate,
+      endDate,
+    }
+  }
+
   useEffect(() => {
-    setDraft(currentFilters)
-  }, [currentFilters])
+    const normalized = sanitizeFilters(currentFilters)
+    setDraft(normalized)
+
+    const params = new URLSearchParams(searchParams.toString())
+    let shouldReplace = false
+
+    const syncParam = (key: string, value: string) => {
+      if (value) {
+        if (params.get(key) !== value) {
+          params.set(key, value)
+          shouldReplace = true
+        }
+      } else if (params.has(key)) {
+        params.delete(key)
+        shouldReplace = true
+      }
+    }
+
+    syncParam("start_date", normalized.startDate)
+    syncParam("end_date", normalized.endDate)
+
+    if (shouldReplace) {
+      const query = params.toString()
+      const nextUrl = query ? `${pathname}?${query}` : pathname
+      router.replace(nextUrl)
+    }
+  }, [currentFilters, minDate, maxDate, pathname, router, searchParams])
 
   const applyFilters = (nextFilters: FilterDraft) => {
+    const normalizedFilters = sanitizeFilters(nextFilters)
     const params = new URLSearchParams(searchParams.toString())
 
-    if (nextFilters.state) params.set("state", nextFilters.state)
+    if (normalizedFilters.state) params.set("state", normalizedFilters.state)
     else params.delete("state")
 
-    if (nextFilters.city && nextFilters.state) params.set("city", nextFilters.city)
+    if (normalizedFilters.city && normalizedFilters.state) params.set("city", normalizedFilters.city)
     else params.delete("city")
 
-    if (nextFilters.startDate) params.set("start_date", nextFilters.startDate)
+    if (normalizedFilters.startDate) params.set("start_date", normalizedFilters.startDate)
     else params.delete("start_date")
 
-    if (nextFilters.endDate) params.set("end_date", nextFilters.endDate)
+    if (normalizedFilters.endDate) params.set("end_date", normalizedFilters.endDate)
     else params.delete("end_date")
 
     const query = params.toString()
@@ -62,7 +146,9 @@ export function StatisticsGlobalFilters({
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    applyFilters(draft)
+    const normalizedDraft = sanitizeFilters(draft)
+    setDraft(normalizedDraft)
+    applyFilters(normalizedDraft)
   }
 
   const onClear = () => {
@@ -86,7 +172,8 @@ export function StatisticsGlobalFilters({
           id="filter-start-date"
           type="date"
           value={draft.startDate}
-          max={draft.endDate || undefined}
+          min={minDate || undefined}
+          max={minDateString(maxDate || undefined, draft.endDate || undefined)}
           onChange={(event) => setDraft((prev) => ({ ...prev, startDate: event.target.value }))}
           className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none ring-slate-300 focus:ring-2"
         />
@@ -100,7 +187,8 @@ export function StatisticsGlobalFilters({
           id="filter-end-date"
           type="date"
           value={draft.endDate}
-          min={draft.startDate || undefined}
+          min={maxDateString(minDate || undefined, draft.startDate || undefined)}
+          max={maxDate || undefined}
           onChange={(event) => setDraft((prev) => ({ ...prev, endDate: event.target.value }))}
           className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none ring-slate-300 focus:ring-2"
         />
@@ -168,6 +256,12 @@ export function StatisticsGlobalFilters({
           Limpar
         </button>
       </div>
+
+      {minDate && maxDate ? (
+        <p className="lg:col-span-12 text-xs text-slate-500">
+          Janela do dataset: {formatMonthYear(minDate)} ate {formatMonthYear(maxDate)}
+        </p>
+      ) : null}
     </form>
   )
 }

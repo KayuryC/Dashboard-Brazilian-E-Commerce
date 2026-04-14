@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 type RankingHorizontalBarPoint = {
@@ -32,7 +33,30 @@ export function RankingHorizontalBar({
   barColor = "#0f172a",
   height = 420,
 }: RankingHorizontalBarProps) {
-  const chartData = [...data].slice(0, 10).reverse()
+  const chartData = useMemo(() => [...data].slice(0, 10).reverse(), [data])
+  const tickFormatter = useMemo(
+    () => (value: number) => {
+      if (valueFormat === "currency") {
+        return new Intl.NumberFormat("pt-BR", {
+          notation: "compact",
+          compactDisplay: "short",
+          style: "currency",
+          currency: "BRL",
+          maximumFractionDigits: 1,
+        }).format(value)
+      }
+
+      return new Intl.NumberFormat("pt-BR", {
+        notation: "compact",
+        compactDisplay: "short",
+      }).format(value)
+    },
+    [valueFormat],
+  )
+  const tooltipFormatter = useMemo(
+    () => (value: number) => formatValue(value, valueFormat),
+    [valueFormat],
+  )
 
   return (
     <div className="w-full" style={{ height }}>
@@ -42,25 +66,10 @@ export function RankingHorizontalBar({
           <XAxis
             type="number"
             tick={{ fill: "#475569", fontSize: 12 }}
-            tickFormatter={(value) => {
-              if (valueFormat === "currency") {
-                return new Intl.NumberFormat("pt-BR", {
-                  notation: "compact",
-                  compactDisplay: "short",
-                  style: "currency",
-                  currency: "BRL",
-                  maximumFractionDigits: 1,
-                }).format(value)
-              }
-
-              return new Intl.NumberFormat("pt-BR", {
-                notation: "compact",
-                compactDisplay: "short",
-              }).format(value)
-            }}
+            tickFormatter={tickFormatter}
           />
           <YAxis type="category" dataKey="label" tick={{ fill: "#334155", fontSize: 11 }} width={180} />
-          <Tooltip formatter={(value: number) => formatValue(value, valueFormat)} />
+          <Tooltip formatter={tooltipFormatter} />
           <Bar dataKey="value" fill={barColor} radius={[0, 6, 6, 0]} />
         </BarChart>
       </ResponsiveContainer>

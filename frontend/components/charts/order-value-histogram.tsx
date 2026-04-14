@@ -6,11 +6,12 @@ import { DescriptiveHistogramBin } from "@/lib/types"
 
 type OrderValueHistogramProps = {
   data: DescriptiveHistogramBin[]
+  height?: number
 }
 
-export function OrderValueHistogram({ data }: OrderValueHistogramProps) {
+export function OrderValueHistogram({ data, height = 320 }: OrderValueHistogramProps) {
   return (
-    <div className="h-80 w-full">
+    <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />

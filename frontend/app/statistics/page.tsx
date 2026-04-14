@@ -1,30 +1,58 @@
+import dynamic from "next/dynamic"
 import { StatisticsGlobalFilters } from "@/components/filters/statistics-global-filters"
 import { KpiSparkline } from "@/components/charts/kpi-sparkline"
-import { OrdersByStatusChart } from "@/components/charts/orders-by-status"
-import { ParetoCategoryChart } from "@/components/charts/pareto-category-chart"
-import { RankingHorizontalBar } from "@/components/charts/ranking-horizontal-bar"
-import { SalesMonthlyChart } from "@/components/charts/sales-monthly-chart"
 import { SalesByStateMapDynamic } from "@/components/maps/sales-by-state-map-dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
+  buildExecutiveContext,
+  calculateDeltaPercentage,
+} from "@/lib/statistics-comparisons"
+import {
   buildActiveDashboardFilters,
   buildDateScopeFilters,
-  buildStatisticsContextLabel,
+  clampStatisticsFiltersToDateBounds,
   parseStatisticsFilters,
   type StatisticsSearchParams,
 } from "@/lib/statistics-filters"
 import {
-  getOrdersByStatus,
-  getOverviewMetrics,
-  getSalesByCategory,
+  getDatasetDateRange,
   getSalesByCity,
   getSalesByState,
-  getSalesMonthly,
+  getStatisticsSummary,
 } from "@/services/api"
 
 type StatisticsPageProps = {
   searchParams?: StatisticsSearchParams | Promise<StatisticsSearchParams>
 }
+
+function ChartSkeleton({ height = 320 }: { height?: number }) {
+  return (
+    <div
+      className="w-full animate-pulse rounded-lg border border-slate-200 bg-slate-100"
+      style={{ height }}
+    />
+  )
+}
+
+const OrdersByStatusChart = dynamic(
+  () => import("@/components/charts/orders-by-status").then((mod) => mod.OrdersByStatusChart),
+  { loading: () => <ChartSkeleton height={320} /> },
+)
+
+const ParetoCategoryChart = dynamic(
+  () => import("@/components/charts/pareto-category-chart").then((mod) => mod.ParetoCategoryChart),
+  { loading: () => <ChartSkeleton height={360} /> },
+)
+
+const RankingHorizontalBar = dynamic(
+  () => import("@/components/charts/ranking-horizontal-bar").then((mod) => mod.RankingHorizontalBar),
+  { loading: () => <ChartSkeleton height={360} /> },
+)
+
+const SalesMonthlyChart = dynamic(
+  () => import("@/components/charts/sales-monthly-chart").then((mod) => mod.SalesMonthlyChart),
+  { loading: () => <ChartSkeleton height={320} /> },
+)
 
 function toCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -58,7 +86,15 @@ function toCompactNumber(value: number) {
 
 export default async function StatisticsPage({ searchParams }: StatisticsPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {}
-  const selectedFilters = parseStatisticsFilters(resolvedSearchParams)
+  const requestedFilters = parseStatisticsFilters(resolvedSearchParams)
+  const datasetDateRange = await getDatasetDateRange()
+  const selectedFilters =
+    datasetDateRange.min_date && datasetDateRange.max_date
+      ? clampStatisticsFiltersToDateBounds(requestedFilters, {
+          minDate: datasetDateRange.min_date,
+          maxDate: datasetDateRange.max_date,
+        })
+      : requestedFilters
 
   const dateScopeFilters = buildDateScopeFilters(selectedFilters)
 
@@ -84,13 +120,15 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
 
   const activeFilters = buildActiveDashboardFilters(selectedFilters)
 
-  const [metrics, ordersByStatus, salesMonthly, salesByCategory, salesByCity] = await Promise.all([
-    getOverviewMetrics(activeFilters),
-    getOrdersByStatus(activeFilters),
-    getSalesMonthly(activeFilters),
-    getSalesByCategory(activeFilters),
-    getSalesByCity(activeFilters),
+  const [summary] = await Promise.all([
+    getStatisticsSummary(activeFilters, 10),
   ])
+
+  const metrics = summary.overview
+  const ordersByStatus = summary.orders_by_status
+  const salesMonthly = summary.sales_monthly
+  const salesByCategory = summary.sales_by_category
+  const salesByCityTop = summary.top_cities_by_revenue
 
   const ordersChartData = ordersByStatus.map((item) => ({
     name: item.label,
@@ -115,22 +153,22 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
   const growthHighlightClass =
     revenueGrowthPercentage >= 0 ? "text-emerald-700" : "text-rose-700"
 
-  const topCityByRevenue = salesByCity[0]
-  const topCityByOrders = [...salesByCity].sort((a, b) => b.orders - a.orders)[0]
+  const topCityByRevenue = salesByCityTop[0]
+  const topCityByOrders = summary.top_city_by_orders ?? salesByCityTop[0]
   const topCategory = salesByCategory[0]
   const topState = salesByStateComparison[0]
   const topStates = salesByStateComparison.slice(0, 3)
 
-  const totalBrazilRevenue = salesByStateComparison.reduce((sum, item) => sum + item.revenue, 0)
-  const selectedStateComparison = selectedFilters.state
-    ? salesByStateComparison.find((item) => item.customer_state.toUpperCase() === selectedFilters.state)
-    : undefined
-  const selectedStateShare =
-    selectedStateComparison && totalBrazilRevenue > 0
-      ? (selectedStateComparison.revenue / totalBrazilRevenue) * 100
+  const executiveContext = buildExecutiveContext(selectedFilters, salesByStateComparison)
+  const selectedStateComparison = executiveContext.selectedStateData
+  const selectedStateShare = executiveContext.participationPercentage ?? 0
+  const selectedStateRank = executiveContext.rankingPosition ?? 0
+  const averageStateRevenue =
+    salesByStateComparison.length > 0
+      ? salesByStateComparison.reduce((sum, item) => sum + item.revenue, 0) / salesByStateComparison.length
       : 0
-  const selectedStateRank = selectedStateComparison
-    ? salesByStateComparison.findIndex((item) => item.customer_state.toUpperCase() === selectedFilters.state) + 1
+  const selectedStateDeltaVsNationalAverage = selectedStateComparison
+    ? calculateDeltaPercentage(selectedStateComparison.revenue, averageStateRevenue)
     : 0
 
   const categoryRankingData = salesByCategory.slice(0, 10).map((item) => ({
@@ -138,7 +176,7 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
     value: item.revenue,
   }))
 
-  const cityRankingData = salesByCity.slice(0, 10).map((item) => ({
+  const cityRankingData = salesByCityTop.slice(0, 10).map((item) => ({
     label: item.customer_city,
     value: item.revenue,
   }))
@@ -162,8 +200,6 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
   const paretoTopCount = Math.max(1, Math.ceil(categoriesForPareto.length * 0.2))
   const paretoTopShare = paretoData[paretoTopCount - 1]?.cumulative_share ?? 0
 
-  const contextLabel = buildStatisticsContextLabel(selectedFilters)
-
   return (
     <main className="min-h-screen p-6 md:p-10">
       <div className="mx-auto grid w-full max-w-[1560px] gap-8">
@@ -181,6 +217,10 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
             startDate: selectedFilters.startDate,
             endDate: selectedFilters.endDate,
           }}
+          dateBounds={{
+            minDate: datasetDateRange.min_date ?? undefined,
+            maxDate: datasetDateRange.max_date ?? undefined,
+          }}
           stateOptions={stateOptions}
           cityOptions={cityOptions}
         />
@@ -189,9 +229,33 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
           <div>
             <h2 className="text-xl font-semibold text-slate-900">Resumo Executivo + Destaques</h2>
             <p className="text-sm text-slate-600">Quem lidera, onde está concentrado e o que domina a operação</p>
-            <p className="mt-2 text-sm text-slate-700">
-              <span className="font-medium text-slate-900">Contexto atual:</span> {contextLabel}
-            </p>
+            <div className="mt-3 grid gap-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              <p>
+                <span className="font-semibold text-slate-900">Analisando:</span>{" "}
+                {executiveContext.analysisLabel}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">Periodo:</span>{" "}
+                {executiveContext.periodLabel}
+              </p>
+              {selectedStateComparison ? (
+                <>
+                  <p>
+                    <span className="font-semibold text-slate-900">Participacao no total:</span>{" "}
+                    {toPercentage(selectedStateShare)} da receita nacional
+                  </p>
+                  <p>
+                    <span className="font-semibold text-slate-900">Posicao no ranking nacional:</span>{" "}
+                    {selectedStateRank}º de {executiveContext.rankingTotal}
+                  </p>
+                </>
+              ) : (
+                <p>
+                  <span className="font-semibold text-slate-900">Participacao no total:</span> 100,0% da receita
+                  (visao Brasil)
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -350,16 +414,24 @@ export default async function StatisticsPage({ searchParams }: StatisticsPagePro
             <Card>
               <CardHeader>
                 <CardTitle>Comparativo de {selectedFilters.state}</CardTitle>
-                <CardDescription>Posicionamento do estado filtrado em relação ao Brasil</CardDescription>
+                <CardDescription>Posicionamento do estado filtrado em relação ao Brasil e a media nacional</CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-2 md:grid-cols-2">
+              <CardContent className="grid gap-2 md:grid-cols-3">
                 <p className="text-sm text-slate-700">
                   Participação na receita nacional:{" "}
                   <span className="font-semibold text-slate-900">{toPercentage(selectedStateShare)}</span>
                 </p>
                 <p className="text-sm text-slate-700">
                   Posição no ranking nacional:{" "}
-                  <span className="font-semibold text-slate-900">{selectedStateRank}º</span>
+                  <span className="font-semibold text-slate-900">
+                    {selectedStateRank}º de {executiveContext.rankingTotal}
+                  </span>
+                </p>
+                <p className="text-sm text-slate-700">
+                  Receita vs media dos estados:{" "}
+                  <span className="font-semibold text-slate-900">
+                    {toSignedPercentage(selectedStateDeltaVsNationalAverage)}
+                  </span>
                 </p>
               </CardContent>
             </Card>

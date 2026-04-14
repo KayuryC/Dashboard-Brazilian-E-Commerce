@@ -9,6 +9,11 @@ export type StatisticsResolvedFilters = {
   endDate: string
 }
 
+export type StatisticsDateBounds = {
+  minDate: string
+  maxDate: string
+}
+
 function getSearchParam(params: StatisticsSearchParams, key: string): string {
   const value = params[key]
   if (Array.isArray(value)) return (value[0] ?? "").trim()
@@ -75,4 +80,36 @@ export function buildStatisticsContextLabel(
   const cityLabel = filters.state ? (filters.city || "Todas as cidades") : "Todas as cidades"
 
   return `Periodo: ${period} · Estado: ${stateLabel} · Cidade: ${cityLabel}`
+}
+
+function clampDateValue(value: string, bounds: StatisticsDateBounds): string {
+  if (!value) return ""
+  if (value < bounds.minDate) return bounds.minDate
+  if (value > bounds.maxDate) return bounds.maxDate
+  return value
+}
+
+export function clampStatisticsFiltersToDateBounds(
+  filters: StatisticsResolvedFilters,
+  bounds: StatisticsDateBounds,
+): StatisticsResolvedFilters {
+  const clampedStartDate = clampDateValue(filters.startDate, bounds)
+  const clampedEndDate = clampDateValue(filters.endDate, bounds)
+
+  const startDate = clampedStartDate || bounds.minDate
+  const endDate = clampedEndDate || bounds.maxDate
+
+  if (startDate && endDate && startDate > endDate) {
+    return {
+      ...filters,
+      startDate,
+      endDate: startDate,
+    }
+  }
+
+  return {
+    ...filters,
+    startDate,
+    endDate,
+  }
 }

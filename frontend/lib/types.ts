@@ -47,13 +47,27 @@ export type DescriptiveHistogramBin = {
   count: number
 }
 
+export type TicketRangeDistributionPoint = {
+  label: string
+  min_value: number
+  max_value: number | null
+  orders_count: number
+  orders_percentage: number
+  revenue: number
+  revenue_percentage: number
+}
+
 export type OrderValueDescriptiveStats = {
   mean_value: number
   median_value: number
   std_dev_value: number
   min_value: number
+  q1_value: number
+  q3_value: number
+  iqr_value: number
   max_value: number
   histogram: DescriptiveHistogramBin[]
+  ticket_range_distribution: TicketRangeDistributionPoint[]
 }
 
 export type DeliveryHistogramBin = {
@@ -69,4 +83,19 @@ export type DeliveryTimeAnalysis = {
   std_delivery_days: number
   late_delivery_percentage: number
   histogram: DeliveryHistogramBin[]
+}
+
+export type DatasetDateRange = {
+  min_date: string | null
+  max_date: string | null
+}
+
+export type StatisticsSummaryResponse = {
+  overview: OverviewMetrics
+  orders_by_status: OrdersByStatusPoint[]
+  sales_monthly: SalesMonthlyPoint[]
+  sales_by_state: SalesByStatePoint[]
+  sales_by_category: SalesByCategoryPoint[]
+  top_cities_by_revenue: SalesByCityPoint[]
+  top_city_by_orders: SalesByCityPoint | null
 }

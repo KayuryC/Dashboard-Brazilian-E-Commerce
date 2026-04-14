@@ -1,4 +1,5 @@
 import {
+  DatasetDateRange,
   DeliveryTimeAnalysis,
   OrderValueDescriptiveStats,
   OrdersByStatusPoint,
@@ -7,6 +8,7 @@ import {
   SalesByCityPoint,
   SalesByStatePoint,
   SalesMonthlyPoint,
+  StatisticsSummaryResponse,
 } from "@/lib/types"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -20,7 +22,8 @@ export type DashboardFiltersParams = {
 }
 
 function buildFilteredUrl(path: string, filters?: DashboardFiltersParams): string {
-  const params = new URLSearchParams()
+  const url = new URL(path, API_BASE_URL)
+  const params = url.searchParams
 
   if (filters?.state) {
     params.set("state", filters.state)
@@ -35,8 +38,8 @@ function buildFilteredUrl(path: string, filters?: DashboardFiltersParams): strin
     params.set("end_date", filters.endDate)
   }
 
-  const query = params.toString()
-  return `${API_BASE_URL}${path}${query ? `?${query}` : ""}`
+  url.search = params.toString()
+  return url.toString()
 }
 
 export async function getOverviewMetrics(filters?: DashboardFiltersParams): Promise<OverviewMetrics> {
@@ -46,6 +49,33 @@ export async function getOverviewMetrics(filters?: DashboardFiltersParams): Prom
 
   if (!res.ok) {
     throw new Error("Failed to fetch overview metrics")
+  }
+
+  return res.json()
+}
+
+export async function getDatasetDateRange(): Promise<DatasetDateRange> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/filters/date-range`, {
+    next: { revalidate: REVALIDATE_SECONDS },
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch dataset date range")
+  }
+
+  return res.json()
+}
+
+export async function getStatisticsSummary(
+  filters?: DashboardFiltersParams,
+  topN = 10,
+): Promise<StatisticsSummaryResponse> {
+  const res = await fetch(buildFilteredUrl(`/api/v1/statistics/summary?top_n=${topN}`, filters), {
+    next: { revalidate: REVALIDATE_SECONDS },
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch statistics summary")
   }
 
   return res.json()
