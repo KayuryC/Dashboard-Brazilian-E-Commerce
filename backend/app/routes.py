@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.config import RAW_DATA_DIR
 from schemas.dashboard import (
+    DatasetDateRange,
     DeliveryHistogramBin,
     DeliveryTimeAnalysis,
     DescriptiveHistogramBin,
@@ -15,10 +16,12 @@ from schemas.dashboard import (
     SalesByCityPoint,
     SalesByStatePoint,
     SalesMonthlyPoint,
+    StatisticsSummaryResponse,
+    TicketRangeDistributionPoint,
 )
 from services.delivery import get_delivery_time_analysis
 from services.descriptive import get_order_value_descriptive_stats
-from services.filters import DashboardFilters
+from services.filters import DashboardFilters, get_dataset_date_range
 from services.orders import get_orders_by_status
 from services.overview import build_overview_metrics
 from services.sales import (
@@ -27,6 +30,7 @@ from services.sales import (
     get_sales_by_state,
     get_sales_monthly,
 )
+from services.summary import get_statistics_summary
 
 router = APIRouter(prefix="/api/v1", tags=["dashboard"])
 
@@ -37,8 +41,22 @@ def _build_dashboard_filters(
     start_date: date | None = Query(default=None),
     end_date: date | None = Query(default=None),
 ) -> DashboardFilters:
+    min_date, max_date = get_dataset_date_range(RAW_DATA_DIR)
+
     if start_date is not None and end_date is not None and start_date > end_date:
         raise HTTPException(status_code=422, detail="start_date cannot be greater than end_date")
+
+    if min_date is not None:
+        if start_date is not None and start_date < min_date:
+            raise HTTPException(status_code=422, detail=f"start_date must be on or after {min_date.isoformat()}")
+        if end_date is not None and end_date < min_date:
+            raise HTTPException(status_code=422, detail=f"end_date must be on or after {min_date.isoformat()}")
+
+    if max_date is not None:
+        if start_date is not None and start_date > max_date:
+            raise HTTPException(status_code=422, detail=f"start_date must be on or before {max_date.isoformat()}")
+        if end_date is not None and end_date > max_date:
+            raise HTTPException(status_code=422, detail=f"end_date must be on or before {max_date.isoformat()}")
 
     return DashboardFilters(
         state=state,
@@ -53,11 +71,26 @@ def health_check() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
+@router.get("/filters/date-range", response_model=DatasetDateRange)
+def filters_date_range() -> DatasetDateRange:
+    min_date, max_date = get_dataset_date_range(RAW_DATA_DIR)
+    return DatasetDateRange(min_date=min_date, max_date=max_date)
+
+
 @router.get("/metrics/overview", response_model=OverviewMetrics)
 def metrics_overview(
     filters: DashboardFilters = Depends(_build_dashboard_filters),
 ) -> OverviewMetrics:
     return build_overview_metrics(RAW_DATA_DIR, filters)
+
+
+@router.get("/statistics/summary", response_model=StatisticsSummaryResponse)
+def statistics_summary(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+    top_n: int = Query(default=10, ge=1, le=50),
+) -> StatisticsSummaryResponse:
+    summary = get_statistics_summary(RAW_DATA_DIR, filters=filters, top_n=top_n)
+    return StatisticsSummaryResponse(**summary)
 
 
 @router.get("/orders/by-status", response_model=list[OrdersByStatusPoint])
@@ -113,8 +146,12 @@ def statistics_descriptive_order_values(
         median_value=stats["median_value"],
         std_dev_value=stats["std_dev_value"],
         min_value=stats["min_value"],
+        q1_value=stats["q1_value"],
+        q3_value=stats["q3_value"],
+        iqr_value=stats["iqr_value"],
         max_value=stats["max_value"],
         histogram=[DescriptiveHistogramBin(**item) for item in stats["histogram"]],
+        ticket_range_distribution=[TicketRangeDistributionPoint(**item) for item in stats["ticket_range_distribution"]],
     )
 
 

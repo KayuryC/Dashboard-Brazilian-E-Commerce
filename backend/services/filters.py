@@ -1,9 +1,13 @@
 from dataclasses import dataclass
 from datetime import date
+from functools import lru_cache
+from pathlib import Path
 import re
 import unicodedata
 
 import pandas as pd
+
+from services.preprocessing import get_consolidated_dataset
 
 
 def _collapse_spaces(value: str) -> str:
@@ -90,3 +94,26 @@ def apply_dashboard_filters(
         filtered = filtered[city_series == city]
 
     return filtered
+
+
+@lru_cache(maxsize=2)
+def _get_cached_dataset_date_range(data_dir_as_string: str) -> tuple[date | None, date | None]:
+    dataframe = get_consolidated_dataset(Path(data_dir_as_string))
+    if dataframe.empty or "order_purchase_timestamp" not in dataframe.columns:
+        return None, None
+
+    purchase_timestamps = pd.to_datetime(dataframe["order_purchase_timestamp"], errors="coerce").dropna()
+    if purchase_timestamps.empty:
+        return None, None
+
+    return purchase_timestamps.min().date(), purchase_timestamps.max().date()
+
+
+def get_dataset_date_range(
+    data_dir: Path,
+    refresh: bool = False,
+) -> tuple[date | None, date | None]:
+    if refresh:
+        _get_cached_dataset_date_range.cache_clear()
+
+    return _get_cached_dataset_date_range(str(data_dir))
