@@ -58,7 +58,9 @@ dashboard-giras/
 │   │   ├── customers.py
 │   │   ├── delivery.py
 │   │   ├── reviews.py
-│   │   └── relationships.py
+│   │   ├── relationships.py
+│   │   ├── dataset_study.py
+│   │   └── modeling.py
 │   ├── data/raw/
 │   ├── requirements.txt
 │   └── main.py
@@ -119,7 +121,7 @@ Rotas de pagina:
 - `/statistics/bloco-2`: desempenho logistico (tempo e atraso).
 - `/statistics/bloco-3`: relacao entre variaveis (correlacao e impacto).
 - `/statistics/bloco-4`: probabilidade e risco operacional.
-- `/modeling`: placeholder do modulo de modelagem estatistica.
+- `/modeling`: regressao linear, previsao e validacao estatistica.
 
 Componentes-chave:
 
@@ -176,6 +178,10 @@ Blocos analiticos:
 - `GET /api/v1/statistics/descriptive/delivery-time` (Bloco 2)
 - `GET /api/v1/statistics/relationships` (Bloco 3)
 - `GET /api/v1/statistics/probability/delivery-risk` (Bloco 4)
+
+Modelagem estatistica:
+
+- `GET /api/v1/modeling/summary` (regressao linear + previsao + testes de hipotese + IC)
 
 Documentacao interativa:
 

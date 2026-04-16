@@ -1,7 +1,7 @@
 import Link from "next/link"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getOverviewMetrics } from "@/services/api"
+import { getModelingSummary, getOverviewMetrics } from "@/services/api"
 
 function toCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -11,7 +11,9 @@ function toCurrency(value: number) {
 }
 
 export default async function HomePage() {
-  const metrics = await getOverviewMetrics()
+  const [metrics, modeling] = await Promise.all([getOverviewMetrics(), getModelingSummary(undefined, 3)])
+  const reg = modeling.linear_regression
+  const validation = modeling.train_test_validation
 
   return (
     <main className="min-h-screen p-6 md:p-10">
@@ -63,17 +65,23 @@ export default async function HomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg bg-amber-50 p-4">
-                <p className="text-sm text-amber-800">
-                  Status: <span className="font-semibold">Em desenvolvimento</span>
+              <div className="grid gap-2 rounded-lg bg-slate-50 p-4">
+                <p className="text-sm text-slate-600">
+                  Amostra: <span className="font-semibold text-slate-900">{reg.sample_size.toLocaleString("pt-BR")}</span>
+                </p>
+                <p className="text-sm text-slate-600">
+                  R2: <span className="font-semibold text-slate-900">{(reg.r2 * 100).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</span>
+                </p>
+                <p className="text-sm text-slate-600">
+                  Validação: <span className="font-semibold text-slate-900">{validation.stability_label}</span>
                 </p>
               </div>
 
               <Link
                 href="/modeling"
-                className="inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
-                Em breve
+                Acessar módulo
               </Link>
             </CardContent>
           </Card>

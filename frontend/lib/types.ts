@@ -121,6 +121,149 @@ export type DatasetDateRange = {
   max_date: string | null
 }
 
+export type DatasetRawTableProfile = {
+  dataset_key: string
+  file_name: string
+  rows: number
+  columns: number
+}
+
+export type DatasetColumnProfile = {
+  column_name: string
+  dtype: string
+  non_null_count: number
+  null_count: number
+  null_percentage: number
+  unique_count: number
+}
+
+export type DatasetStudyResponse = {
+  raw_tables: DatasetRawTableProfile[]
+  raw_total_rows: number
+  raw_total_columns: number
+  consolidated_rows: number
+  consolidated_columns: number
+  consolidated_unique_orders: number
+  consolidated_unique_customers: number
+  consolidated_missing_cells: number
+  consolidated_missing_percentage: number
+  consolidated_memory_mb: number
+  consolidated_columns_profile: DatasetColumnProfile[]
+}
+
+export type ModelingCoefficient = {
+  feature_key: string
+  feature_label: string
+  coefficient: number
+  std_error: number
+  ci_lower: number
+  ci_upper: number
+}
+
+export type ModelingPredictionSample = {
+  actual_value: number
+  predicted_value: number
+  residual: number
+}
+
+export type LinearRegressionModelResult = {
+  target_label: string
+  sample_size: number
+  r2: number
+  adjusted_r2: number
+  rmse: number
+  mae: number
+  target_mean: number
+  target_std: number
+  baseline_rmse: number
+  baseline_mae: number
+  rmse_gain_vs_baseline: number
+  mae_gain_vs_baseline: number
+  rmse_percent_of_mean: number
+  mae_percent_of_mean: number
+  quality_label: string
+  executive_reading: string
+  coefficients: ModelingCoefficient[]
+  prediction_samples: ModelingPredictionSample[]
+}
+
+export type ModelingForecastPoint = {
+  period: string
+  actual_value: number | null
+  predicted_value: number
+  is_future: boolean
+}
+
+export type RevenueForecastResult = {
+  sample_size: number
+  r2: number
+  rmse: number
+  mae: number
+  slope: number
+  intercept: number
+  horizon_months: number
+  series: ModelingForecastPoint[]
+}
+
+export type ModelingTrainTestValidationResult = {
+  train_size: number
+  test_size: number
+  r2_train: number
+  r2_test: number
+  rmse_train: number
+  rmse_test: number
+  mae_train: number
+  mae_test: number
+  generalization_gap: number
+  stability_label: string
+  interpretation: string
+}
+
+export type HypothesisTestResult = {
+  test_name: string
+  metric_label: string
+  group_a_label: string
+  group_b_label: string
+  group_a_mean: number
+  group_b_mean: number
+  mean_difference: number
+  p_value: number
+  z_score: number
+  ci_lower: number
+  ci_upper: number
+  significance_level: number
+  reject_null: boolean
+  interpretation: string
+}
+
+export type ConfidenceIntervalResult = {
+  metric_key: string
+  metric_label: string
+  point_estimate: number
+  ci_lower: number
+  ci_upper: number
+  confidence_level: number
+  sample_size: number
+}
+
+export type PracticalRecommendation = {
+  priority: string
+  title: string
+  recommendation: string
+  evidence: string
+  expected_impact: string
+}
+
+export type ModelingSummaryResponse = {
+  linear_regression: LinearRegressionModelResult
+  revenue_forecast: RevenueForecastResult
+  train_test_validation: ModelingTrainTestValidationResult
+  hypothesis_tests: HypothesisTestResult[]
+  confidence_intervals: ConfidenceIntervalResult[]
+  practical_recommendations: PracticalRecommendation[]
+  study_limitations: string[]
+}
+
 export type StatisticsSummaryResponse = {
   overview: OverviewMetrics
   orders_by_status: OrdersByStatusPoint[]

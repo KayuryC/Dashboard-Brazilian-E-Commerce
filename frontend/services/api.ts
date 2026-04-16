@@ -1,4 +1,5 @@
 import {
+  DatasetStudyResponse,
   DeliveryRiskAnalysis,
   DatasetDateRange,
   DeliveryTimeAnalysis,
@@ -10,6 +11,7 @@ import {
   SalesByStatePoint,
   SalesMonthlyPoint,
   RelationshipsAnalysisResponse,
+  ModelingSummaryResponse,
   StatisticsSummaryResponse,
 } from "@/lib/types"
 
@@ -63,6 +65,36 @@ export async function getDatasetDateRange(): Promise<DatasetDateRange> {
 
   if (!res.ok) {
     throw new Error("Failed to fetch dataset date range")
+  }
+
+  return res.json()
+}
+
+export async function getDatasetStudy(): Promise<DatasetStudyResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/statistics/dataset-study`, {
+    next: { revalidate: REVALIDATE_SECONDS },
+  })
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch dataset study")
+  }
+
+  return res.json()
+}
+
+export async function getModelingSummary(
+  filters?: DashboardFiltersParams,
+  forecastHorizonMonths = 3,
+): Promise<ModelingSummaryResponse> {
+  const res = await fetch(
+    buildFilteredUrl(`/api/v1/modeling/summary?forecast_horizon_months=${forecastHorizonMonths}`, filters),
+    {
+      next: { revalidate: REVALIDATE_SECONDS },
+    },
+  )
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch modeling summary")
   }
 
   return res.json()

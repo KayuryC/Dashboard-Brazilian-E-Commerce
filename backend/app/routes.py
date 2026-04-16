@@ -4,7 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.config import RAW_DATA_DIR
 from schemas.dashboard import (
+    DatasetColumnProfile,
     DatasetDateRange,
+    DatasetRawTableProfile,
+    DatasetStudyResponse,
     DeliveryHistogramBin,
     DeliveryRiskAnalysis,
     DeliveryRiskCdfPoint,
@@ -13,6 +16,13 @@ from schemas.dashboard import (
     DeliveryMonthlyTrendPoint,
     DescriptiveHistogramBin,
     HealthResponse,
+    HypothesisTestResult,
+    ConfidenceIntervalResult,
+    LinearRegressionModelResult,
+    ModelingSummaryResponse,
+    ModelingTrainTestValidationResult,
+    PracticalRecommendation,
+    RevenueForecastResult,
     OrdersByStatusPoint,
     OrderValueDescriptiveStats,
     OverviewMetrics,
@@ -29,9 +39,11 @@ from schemas.dashboard import (
     StatisticsSummaryResponse,
     TicketRangeDistributionPoint,
 )
+from services.dataset_study import get_dataset_study
 from services.delivery import get_delivery_risk_analysis, get_delivery_time_analysis
 from services.descriptive import get_order_value_descriptive_stats
 from services.filters import DashboardFilters, get_dataset_date_range
+from services.modeling import get_modeling_summary
 from services.orders import get_orders_by_status
 from services.overview import build_overview_metrics
 from services.relationships import get_relationships_analysis
@@ -102,6 +114,55 @@ def statistics_summary(
 ) -> StatisticsSummaryResponse:
     summary = get_statistics_summary(RAW_DATA_DIR, filters=filters, top_n=top_n)
     return StatisticsSummaryResponse(**summary)
+
+
+@router.get(
+    "/statistics/dataset-study",
+    response_model=DatasetStudyResponse,
+)
+def statistics_dataset_study() -> DatasetStudyResponse:
+    profile = get_dataset_study(RAW_DATA_DIR)
+    return DatasetStudyResponse(
+        raw_tables=[DatasetRawTableProfile(**item) for item in profile["raw_tables"]],
+        raw_total_rows=profile["raw_total_rows"],
+        raw_total_columns=profile["raw_total_columns"],
+        consolidated_rows=profile["consolidated_rows"],
+        consolidated_columns=profile["consolidated_columns"],
+        consolidated_unique_orders=profile["consolidated_unique_orders"],
+        consolidated_unique_customers=profile["consolidated_unique_customers"],
+        consolidated_missing_cells=profile["consolidated_missing_cells"],
+        consolidated_missing_percentage=profile["consolidated_missing_percentage"],
+        consolidated_memory_mb=profile["consolidated_memory_mb"],
+        consolidated_columns_profile=[
+            DatasetColumnProfile(**item) for item in profile["consolidated_columns_profile"]
+        ],
+    )
+
+
+@router.get(
+    "/modeling/summary",
+    response_model=ModelingSummaryResponse,
+)
+def modeling_summary(
+    filters: DashboardFilters = Depends(_build_dashboard_filters),
+    forecast_horizon_months: int = Query(default=3, ge=1, le=12),
+) -> ModelingSummaryResponse:
+    summary = get_modeling_summary(
+        RAW_DATA_DIR,
+        filters=filters,
+        forecast_horizon_months=forecast_horizon_months,
+    )
+    return ModelingSummaryResponse(
+        linear_regression=LinearRegressionModelResult(**summary["linear_regression"]),
+        revenue_forecast=RevenueForecastResult(**summary["revenue_forecast"]),
+        train_test_validation=ModelingTrainTestValidationResult(**summary["train_test_validation"]),
+        hypothesis_tests=[HypothesisTestResult(**item) for item in summary["hypothesis_tests"]],
+        confidence_intervals=[ConfidenceIntervalResult(**item) for item in summary["confidence_intervals"]],
+        practical_recommendations=[
+            PracticalRecommendation(**item) for item in summary["practical_recommendations"]
+        ],
+        study_limitations=[str(item) for item in summary["study_limitations"]],
+    )
 
 
 @router.get("/orders/by-status", response_model=list[OrdersByStatusPoint])

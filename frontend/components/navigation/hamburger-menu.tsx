@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import { BarChart3, Clock3, Home, Layers3, Menu, ShieldAlert, X } from "lucide-react"
+import { BarChart3, Clock3, Database, Home, Layers3, Menu, ShieldAlert, X } from "lucide-react"
 import { type ComponentType, useMemo, useState } from "react"
 
 import { cn } from "@/lib/utils"
@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
   {
     href: "/modeling",
     label: "Modelagem Estatística",
-    description: "Módulo em desenvolvimento",
+    description: "Regressao, inferencia e decisao orientada a dados",
     icon: Clock3,
   },
 ]
@@ -47,6 +47,12 @@ const statisticsNavItems: NavItem[] = [
     label: "Visão geral",
     description: "Insights introdutórios do módulo",
     icon: Layers3,
+  },
+  {
+    href: "/statistics/dataset",
+    label: "Estudo do Dataset",
+    description: "Linhas, colunas, tipos e nulos",
+    icon: Database,
   },
   {
     href: "/statistics/bloco-1",

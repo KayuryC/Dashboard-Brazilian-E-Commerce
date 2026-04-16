@@ -130,6 +130,149 @@ class DatasetDateRange(BaseModel):
     max_date: date | None
 
 
+class DatasetRawTableProfile(BaseModel):
+    dataset_key: str
+    file_name: str
+    rows: int
+    columns: int
+
+
+class DatasetColumnProfile(BaseModel):
+    column_name: str
+    dtype: str
+    non_null_count: int
+    null_count: int
+    null_percentage: float
+    unique_count: int
+
+
+class DatasetStudyResponse(BaseModel):
+    raw_tables: list[DatasetRawTableProfile]
+    raw_total_rows: int
+    raw_total_columns: int
+    consolidated_rows: int
+    consolidated_columns: int
+    consolidated_unique_orders: int
+    consolidated_unique_customers: int
+    consolidated_missing_cells: int
+    consolidated_missing_percentage: float
+    consolidated_memory_mb: float
+    consolidated_columns_profile: list[DatasetColumnProfile]
+
+
+class ModelingCoefficient(BaseModel):
+    feature_key: str
+    feature_label: str
+    coefficient: float
+    std_error: float
+    ci_lower: float
+    ci_upper: float
+
+
+class ModelingPredictionSample(BaseModel):
+    actual_value: float
+    predicted_value: float
+    residual: float
+
+
+class LinearRegressionModelResult(BaseModel):
+    target_label: str
+    sample_size: int
+    r2: float
+    adjusted_r2: float
+    rmse: float
+    mae: float
+    target_mean: float
+    target_std: float
+    baseline_rmse: float
+    baseline_mae: float
+    rmse_gain_vs_baseline: float
+    mae_gain_vs_baseline: float
+    rmse_percent_of_mean: float
+    mae_percent_of_mean: float
+    quality_label: str
+    executive_reading: str
+    coefficients: list[ModelingCoefficient]
+    prediction_samples: list[ModelingPredictionSample]
+
+
+class ModelingForecastPoint(BaseModel):
+    period: str
+    actual_value: float | None
+    predicted_value: float
+    is_future: bool
+
+
+class RevenueForecastResult(BaseModel):
+    sample_size: int
+    r2: float
+    rmse: float
+    mae: float
+    slope: float
+    intercept: float
+    horizon_months: int
+    series: list[ModelingForecastPoint]
+
+
+class ModelingTrainTestValidationResult(BaseModel):
+    train_size: int
+    test_size: int
+    r2_train: float
+    r2_test: float
+    rmse_train: float
+    rmse_test: float
+    mae_train: float
+    mae_test: float
+    generalization_gap: float
+    stability_label: str
+    interpretation: str
+
+
+class HypothesisTestResult(BaseModel):
+    test_name: str
+    metric_label: str
+    group_a_label: str
+    group_b_label: str
+    group_a_mean: float
+    group_b_mean: float
+    mean_difference: float
+    p_value: float
+    z_score: float
+    ci_lower: float
+    ci_upper: float
+    significance_level: float
+    reject_null: bool
+    interpretation: str
+
+
+class ConfidenceIntervalResult(BaseModel):
+    metric_key: str
+    metric_label: str
+    point_estimate: float
+    ci_lower: float
+    ci_upper: float
+    confidence_level: float
+    sample_size: int
+
+
+class PracticalRecommendation(BaseModel):
+    priority: str
+    title: str
+    recommendation: str
+    evidence: str
+    expected_impact: str
+
+
+class ModelingSummaryResponse(BaseModel):
+    linear_regression: LinearRegressionModelResult
+    revenue_forecast: RevenueForecastResult
+    train_test_validation: ModelingTrainTestValidationResult
+    hypothesis_tests: list[HypothesisTestResult]
+    confidence_intervals: list[ConfidenceIntervalResult]
+    practical_recommendations: list[PracticalRecommendation]
+    study_limitations: list[str]
+
+
 class StatisticsSummaryResponse(BaseModel):
     overview: OverviewMetrics
     orders_by_status: list[OrdersByStatusPoint]
